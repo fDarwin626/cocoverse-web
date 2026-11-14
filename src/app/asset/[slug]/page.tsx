@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AssetView } from "@/components/detail/AssetView";
 import { ASSETS } from "@/lib/assets";
 import { docFor } from "@/lib/docs";
@@ -16,7 +17,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: asset.name, description: docFor(slug)?.summary };
 }
 
-export default async function AssetPage({ params }: Props) {
+export default function AssetPage({ params }: Props) {
+  return (
+    <Suspense fallback={null}>
+      <AssetContent params={params} />
+    </Suspense>
+  );
+}
+
+async function AssetContent({ params }: Props) {
   const { slug } = await params;
   return <AssetView slug={slug} />;
 }

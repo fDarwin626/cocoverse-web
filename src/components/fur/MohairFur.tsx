@@ -772,8 +772,7 @@ void main() {
         vec3 c1 = shadeLock(best1, Nb, lockAlbedo(best1, i1, inkOf(l1.rgb)), illum, i1);
         acc = vec4(c1 * best1.cov, best1.cov) + acc * (1.0 - best1.cov);
     }
-    acc.rgb *= 1.0 - 0.4 * letterShade * (1.0 - ink);
-
+    acc.rgb *= 1.0 - 0.1 * letterShade * (1.0 - ink);
     // A soft halo of fine fuzz round the body: the swatch's edges are cotton,
     // not cut.
     if (sd > -0.03 && sd < 0.06) {
@@ -1862,7 +1861,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             setU("uLook", a.sheen / 100, a.tipLight / 100, Math.max(0, a.flyaways) / 100, (SWAY_REST + SWAY_ACTIVE * state.act) * (reduced ? 0 : Math.min(1, clamp(c.sway, 0, 10) / 5)))
                         setU("uGround", a.shadow / 100, a.glow / 100)
             const smallest = c.runs && c.runs.length ? Math.min(...c.runs.map((r) => r.size ?? labelSizeRef(c.font) * uu)) : labelSizeRef(c.font) * uu
-            setU("uFray", Math.min(LETTER_FRAY, 0.07 * smallest))
+            setU("uFray", Math.max(Math.min(LETTER_FRAY, 0.07 * smallest), c.art ? 2.2 : 0))
             g.drawArrays(g.TRIANGLES, 0, 3)
             drawnFrames++
 

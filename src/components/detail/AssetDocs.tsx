@@ -28,6 +28,15 @@ export function AssetDocs({ slug }: { slug: string }) {
         </ul>
       </section>
 
+      {doc.install ? (
+        <section>
+          <h2 className="carve text-3xl">{doc.install.title}</h2>
+          <div className="mt-5">
+            <Code>{doc.install.command}</Code>
+          </div>
+          <p className="carve-body mt-4">{doc.install.note}</p>
+        </section>
+      ) : null}
       <section>
                   <h2 className="carve text-3xl">Parameters</h2>
         <LiquidGlass className="mt-5">
@@ -132,10 +141,10 @@ export function AssetDocs({ slug }: { slug: string }) {
         <h2 className="carve text-3xl">Example</h2>
         <div className="mt-5">
           <Code>{doc.example}</Code>
-        </div>
+        </div>=-
       </section>
 
-      {doc.notes?.length ? (
+    /  {doc.notes?.length ? (
         <section>
            <h2 className="carve text-3xl">Good to know</h2>
           <ul className="carve-body mt-5 list-disc space-y-2 pl-6">

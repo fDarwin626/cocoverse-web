@@ -12,16 +12,25 @@ export type DocEnum = {
   values: { name: string; desc: string }[];
 };
 
+export type DocInstall = {
+  title: string;
+  command: string;
+  note: string;
+};
+
 export type DocParamGroup = {
   name: string;
   desc: string;
   params: DocParam[];
 };
 
+
 export type AssetDoc = {
   summary: string;
   useCases: string[];
-  /** The working call the get-code button copies. */
+  /** The install step shown right after the use cases. Every asset inherits it, so leave it out. */
+  install?: DocInstall;
+/** The working call the get-code button copies. */
   getCode: string;
   params: DocParam[];
   paramGroups?: DocParamGroup[];
@@ -99,8 +108,15 @@ const EFFECT_CONTROLLER: DocController = {
   ],
 };
 
-/** One entry per asset, keyed by its slug (the id in ASSETS). Robots read this too. */
-export const DOCS: Record<string, AssetDoc> = {
+/** The same install step for every asset. Change it here and every page follows. */
+const INSTALL: DocInstall = {
+  title: "Install the package",
+  command: "flutter pub add cocoverse_ui",
+  note: "Run this once in your Flutter project's folder, then import 'package:cocoverse_ui/cocoverse_ui.dart' where you use the effect.",
+};
+
+/** One entry per asset, keyed by its slug (the id in ASSETS). Written here, then exported below with the shared install step added. */
+const RAW_DOCS: Record<string, AssetDoc> = {
   urchin: {
     summary:
       "A glass-bright sea urchin: a sphere whose radius is a set of standing waves, so it grows spikes, ridges and rings that slowly morph. Touch it and it leans toward your finger.",
@@ -1505,7 +1521,463 @@ class Demo extends StatelessWidget {
       "Drag spins it, and it tilts slightly toward the finger.",
     ],
   },
+fireworks: {
+    summary:
+      "A firework show that sits on top of whatever is behind it. Rockets climb, burst into streaking sparks and fall, and an optional title and subtitle animate in over the show. It draws only the sparks, so it works over a plain colour, an image or your whole app.",
+    useCases: [
+      "A celebration when someone finishes onboarding, pays or reaches a goal",
+      "A splash or welcome screen with a title that arrives with the show",
+      "A congratulations sheet that closes itself with onFinished",
+      "A looping festive backdrop for a campaign or holiday page",
+    ],
+    getCode: `Positioned.fill(
+  child: Fireworks(
+    duration: Duration(seconds: 5),
+    title: 'Well done!',
+    subtitle: 'Your account is ready',
+  ),
+)`,
+    params: [
+      { name: "colors", type: "List<Color>", def: "seven bright colours", desc: "One colour per burst, picked at random. An empty list gives random hues." },
+      { name: "duration", type: "Duration", def: "6 seconds", desc: "How long new fireworks keep launching. The last bursts finish fading after this, so the whole show runs a couple of seconds longer." },
+      { name: "delay", type: "Duration", def: "0", desc: "How long to wait before the first firework launches." },
+      { name: "loop", type: "bool", def: "false", desc: "Whether the show starts again when it ends." },
+      { name: "rate", type: "double", def: "100.0", desc: "How often fireworks launch, from 1 to 100. 100 is about four a second." },
+      { name: "sparks", type: "int", def: "290", desc: "Sparks in each burst. Lower qualities draw fewer." },
+      { name: "size", type: "double", def: "94.0", desc: "How big the bursts and the sparks are, as a percentage, from 10 to 300." },
+      { name: "trail", type: "double", def: "77.0", desc: "The length of each spark's streak, from 0 to 100." },
+      { name: "speed", type: "double", def: "73.0", desc: "How fast time runs, as a percentage, from 0 to 300. 100 is the original pace." },
+      { name: "tilt", type: "double", def: "45.0", desc: "Camera pitch in degrees, from -20 to 85. 0 shows flat rings seen from the side, about 60 looks down from above." },
+      { name: "scale", type: "double", def: "100.0", desc: "How large the show is on screen, from 30 to 200 percent." },
+      { name: "title", type: "String?", def: "null", desc: "A line of big text. Null shows none." },
+      { name: "subtitle", type: "String?", def: "null", desc: "A smaller line under the title. Null shows none." },
+      { name: "titleStyle", type: "TextStyle?", def: "null", desc: "Style for the title. It is merged over a bold white default, so you only set what you change. Give it any font, for example TextStyle(fontFamily: 'Poppins') or a GoogleFonts style." },
+      { name: "subtitleStyle", type: "TextStyle?", def: "null", desc: "Style for the subtitle, merged over a soft white default." },
+      { name: "titleAnimation", type: "FireworksTextAnimation", def: "blur", desc: "How the title arrives." },
+      { name: "subtitleAnimation", type: "FireworksTextAnimation", def: "rise", desc: "How the subtitle arrives." },
+      { name: "titleDelay", type: "Duration", def: "600 milliseconds", desc: "When the title starts to appear, counted from when the widget appears." },
+      { name: "titleDuration", type: "Duration", def: "1000 milliseconds", desc: "How long the title takes to arrive." },
+      { name: "subtitleDelay", type: "Duration?", def: "null", desc: "When the subtitle starts to appear. Null means half a second after the title starts." },
+      { name: "subtitleDuration", type: "Duration", def: "800 milliseconds", desc: "How long the subtitle takes to arrive." },
+      { name: "textAlignment", type: "Alignment", def: "center", desc: "Where the text sits in the box." },
+      { name: "textPadding", type: "EdgeInsets", def: "EdgeInsets.all(24)", desc: "Space round the text." },
+      { name: "textGap", type: "double", def: "10.0", desc: "Space between the title and the subtitle." },
+      { name: "textAlign", type: "TextAlign", def: "center", desc: "How lines of text align when they wrap." },
+      { name: "onFinished", type: "VoidCallback?", def: "null", desc: "Called when the show has ended and the last spark has faded. Use it to close a sheet or move to the next screen. With loop on, it is called at the end of every round." },
+      { name: "paused", type: "bool", def: "false", desc: "Freezes the show and the text when true." },
+      quality("medium", "Level of detail. Lower settings draw fewer sparks in each burst: 45 percent of sparks on low, 70 on medium and all of them on high."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() plays the show and the text again from the start." },
+      { name: "semanticLabel", type: "String?", def: "null", desc: "Screen-reader description of the show. Null marks it as decorative. The text is always read out." },
+    ],
+    enums: [
+      {
+        name: "FireworksTextAnimation",
+        desc: "How a line of text arrives.",
+        values: [
+          { name: "fade", desc: "Fades in." },
+          { name: "rise", desc: "Rises a little while fading in." },
+          { name: "pop", desc: "Grows in with a small overshoot." },
+          { name: "blur", desc: "Starts blurred and softly comes into focus." },
+          { name: "typewriter", desc: "Types out one character at a time." },
+          { name: "letters", desc: "Each letter rises in just after the one before it." },
+          { name: "track", desc: "Starts widely spaced and draws together." },
+        ],
+      },
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "EffectController",
+      desc: "Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "pause()", desc: "Freezes the show and the text." },
+        { name: "resume()", desc: "Continues after pause()." },
+        { name: "reset()", desc: "Plays the show and the text again from the start." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class Congrats extends StatelessWidget {
+  const Congrats({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          const Center(child: Text('Welcome aboard')),
+          Positioned.fill(
+            child: Fireworks(
+              duration: const Duration(seconds: 5),
+              title: 'Well done!',
+              subtitle: 'Your account is ready',
+              titleAnimation: FireworksTextAnimation.pop,
+              onFinished: () => Navigator.of(context).maybePop(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It has no background of its own: only the sparks are drawn. Put it in a Stack above the screen it celebrates.",
+      "It ignores touches, so what is under it stays tappable.",
+      "It does not run on its own: it plays for duration, and optionally shows a title and a subtitle. Set loop for a show that never ends.",
+      "It fills the space it is given. Set the size with a SizedBox, or use Positioned.fill to cover the whole screen.",
+      "If the device is set to reduce motion, there is no show and the text simply appears.",
+    ],
+  },
+
+  meteor: {
+    summary:
+      "A cracked meteor with glowing seams, hanging in a swarm of shapes and rock chips. It breaks apart when it appears and closes up, and a finger or cursor can push the pieces away or turn the whole thing. It has no background, so it works over anything.",
+    useCases: [
+      "A dramatic hero visual for a game, a launch or a crypto or space theme",
+      "A splash screen where the rock breaks apart and comes together",
+      "A tactile showpiece that people want to poke and spin",
+    ],
+    getCode: `SizedBox(
+  height: 360,
+  child: Meteor(
+    shape: MeteorShape.torus,
+    shapeColor: Color(0xFF7BD8FF),
+  ),
+)`,
+    params: [
+      { name: "shape", type: "MeteorShape", def: "plus", desc: "Which shape swarms round the meteor." },
+      { name: "shapeColor", type: "Color", def: "0xFFEDEFF5", desc: "The colour of the swarm. This is the only thing that changes colour: the rock and the lava are fixed." },
+      { name: "shapeCount", type: "int", def: "52", desc: "How many shapes, up to 200. Lower qualities draw fewer." },
+      { name: "shapeSize", type: "double", def: "5.0", desc: "How big each shape is, from 0 to 10." },
+      { name: "shapeThickness", type: "double", def: "5.0", desc: "How deep each shape is, from 0 to 10. It changes the plus, the torus and the cylinder. The cube and the octahedron ignore it." },
+      { name: "shapeSpread", type: "double", def: "5.0", desc: "How far the swarm reaches from the rock, from 0 to 10." },
+      { name: "debrisCount", type: "int", def: "54", desc: "How many rock chips float round it, up to 160." },
+      { name: "debrisSize", type: "double", def: "5.0", desc: "How big each chip is, from 0 to 10." },
+      { name: "debrisSpread", type: "double", def: "5.0", desc: "How far the chips reach, from 0 to 10." },
+      { name: "shards", type: "int", def: "11", desc: "How many slabs the rock breaks into, from 3 to 12." },
+      { name: "irregularity", type: "double", def: "6.0", desc: "How uneven the ball and its break are, from 0 to 10." },
+      { name: "thickness", type: "double", def: "5.0", desc: "How thick the slabs are, from 0 to 10. Thin slabs leave a wider hollow." },
+      { name: "glow", type: "double", def: "6.0", desc: "How bright the cracks and the hollow burn, from 0 to 10." },
+      { name: "size", type: "double", def: "3.7", desc: "How much of the box the meteor fills, from 0 to 10." },
+      { name: "offsetX", type: "double", def: "0.0", desc: "Moves the meteor across the box, as a percentage of its width, from -50 to 50. Positive is right." },
+      { name: "offsetY", type: "double", def: "0.0", desc: "Moves the meteor down the box, as a percentage of its height, from -50 to 50. Positive is down." },
+      { name: "spin", type: "double", def: "3.0", desc: "How fast it turns by itself, from 0 to 10. 0 stops the turning." },
+      { name: "bob", type: "double", def: "4.0", desc: "How far it rises and falls, from 0 to 10." },
+      { name: "sway", type: "double", def: "4.0", desc: "How much it rocks off vertical, from 0 to 10." },
+      { name: "entrance", type: "bool", def: "true", desc: "Whether the rock breaks apart and comes together when it appears." },
+      { name: "scatter", type: "double", def: "6.0", desc: "How far the pieces start out, from 0 to 10." },
+      { name: "tumble", type: "double", def: "6.0", desc: "How hard the pieces tumble when they arrive, from 0 to 10." },
+      { name: "stagger", type: "double", def: "4.0", desc: "How much later the last piece lands than the first, from 0 to 10." },
+      { name: "reach", type: "double", def: "5.0", desc: "How much of the box a finger or cursor pushes, from 0 to 10." },
+      { name: "strength", type: "double", def: "5.0", desc: "How far the nearest pieces are shoved, from 0 to 10. 0 turns it off." },
+      { name: "repel", type: "double", def: "6.0", desc: "Which way pieces go, from 0 to 10. 0 bulges them straight out from the middle, 10 shoves them directly away from the finger." },
+      { name: "settle", type: "double", def: "5.0", desc: "How sharply everything springs back, from 0 to 10." },
+      { name: "touchPush", type: "bool", def: "true", desc: "Whether a finger or cursor pushes the pieces away." },
+      { name: "dragToRotate", type: "bool", def: "true", desc: "Whether dragging a finger or cursor turns the meteor. It keeps turning a little after you let go." },
+      { name: "speed", type: "double", def: "100.0", desc: "How fast time runs, as a percentage, from 0 to 300. 100 is normal, 0 freezes it." },
+      PAUSED,
+      quality("medium", "Level of detail. Lower settings draw fewer shapes and chips (40 percent on low, 70 on medium, all of them on high) and use fewer noise layers on the rock (4 on low, 5 on medium and high)."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() breaks the rock apart and plays the entrance again." },
+      SEMANTIC,
+    ],
+    enums: [
+      {
+        name: "MeteorShape",
+        desc: "The shape that swarms round the meteor.",
+        values: [
+          { name: "plus", desc: "A flat plus, the original." },
+          { name: "torus", desc: "A ring." },
+          { name: "cylinder", desc: "A short disc." },
+          { name: "box", desc: "A cube." },
+          { name: "octahedron", desc: "A pointed diamond with eight faces, the Ethereum shape." },
+        ],
+      },
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "EffectController",
+      desc: "Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "pause()", desc: "Freezes the animation." },
+        { name: "resume()", desc: "Continues the animation after pause()." },
+        { name: "reset()", desc: "Breaks the rock apart and plays the entrance again." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class Demo extends StatelessWidget {
+  const Demo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 360,
+        height: 360,
+        child: Meteor(
+          shape: MeteorShape.octahedron,
+          shapeColor: Color(0xFF7BD8FF),
+          glow: 8,
+          strength: 7,
+        ),
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It has no background, so it works over anything. It fills the space its parent gives it: set the size with a SizedBox and the position with padding or Align.",
+      "The rock is drawn by a fragment shader, meteor_rock.frag, which must be listed under shaders: in the package's pubspec.yaml.",
+      "The rock is the costly part. On weaker phones leave quality on medium or low.",
+      "Dragging turns the meteor. A paused meteor still redraws while it is being dragged.",
+      "With touchPush and dragToRotate both off, the meteor ignores touches completely.",
+    ],
+  },
+
+  mito: {
+    summary:
+      "A small hovering robot with a glossy round head, a dark face with glowing eyes and flipper arms, floating on three rings of light that pulse one after another like thrusters. It follows your finger or pointer with its head and eyes, glides along the space to hover over it, blinks, hops when you tap it and waves hello.",
+    useCases: [
+      "A friendly guide for onboarding or a welcome screen",
+      "An assistant avatar that reacts to a voice: the louder it is, the brighter the rings burn",
+      "A splash screen where it powers up from the floor or flies in from past the edge",
+      "A companion beside a form: eyes shut while a password is typed, a shake for a wrong one, a nod for a right one",
+    ],
+    getCode: `Mito(
+  entrance: MitoEntrance.powerUp,
+)`,
+    params: [
+      { name: "colors", type: "List<Color>?", def: "white, near-black, blue", desc: "Three colours: the helmet and body, the face (the screen), and the eyes. Missing colours keep their defaults: a white body, a near-black screen and blue eyes." },
+      { name: "ringColors", type: "List<Color>?", def: "gold, orange, red", desc: "Colours of the three rings, from the small one under the pod to the big one. Null keeps the defaults. One colour tints all three rings; two colours give the small ring the first and the other two the second." },
+      { name: "size", type: "double", def: "1.0", desc: "Size of Mito, where 1.0 is about 224 logical pixels from the floor to the top of the helmet. The smallest is 0.5. On phones and tablets the biggest is 1.5, because a big robot is costly to draw; on desktop and web the biggest is 4.0. Mito never grows past the height of the space it is given." },
+      { name: "shadowColor", type: "Color", def: "0xFF2E4D6A", desc: "Colour of the shadow on the invisible floor." },
+      { name: "shadowStrength", type: "double", def: "0.0", desc: "How dark the shadow is, from 0 to 1. 0 draws no shadow." },
+      { name: "mood", type: "CharacterMood", def: "neutral", desc: "How it feels, shown through its eyes: open, curved into a smile, or shut. A shut Mito also powers down: it sinks a little and the rings dim. Changes ease in over a moment." },
+      LOOK_AT,
+      LOOK_AT_KEY,
+      FOLLOW,
+      { name: "reach", type: "double", def: "1.0", desc: "How far the head turns toward what it looks at, from 0 to 2. 0 keeps the head still." },
+      { name: "hop", type: "double", def: "1.0", desc: "Height of the hop when you tap Mito, from 0 to 3. 0 turns tapping off." },
+      { name: "blink", type: "bool", def: "true", desc: "Whether Mito blinks now and then." },
+      { name: "glance", type: "double", def: "1.0", desc: "How often Mito glances about when nobody is pointing. 0 never glances." },
+      { name: "glideSpeed", type: "double", def: "1.0", desc: "How fast Mito glides, where 2.0 is twice as fast. 0 means it never glides: it only reacts, and it appears, leaves and moves to a new position at once." },
+      { name: "glideToPointer", type: "bool", def: "true", desc: "Whether Mito glides along the space to hover over your finger or pointer, and back to its place a few seconds after you go. It needs glideSpeed above 0, and follow and interactive on." },
+      { name: "position", type: "double?", def: "null", desc: "Where Mito hovers across the space, from -1 at the left edge to 1 at the right edge, with 0 the middle. When it changes, Mito glides there. Null means the middle." },
+      { name: "bob", type: "double", def: "1.0", desc: "How much Mito bobs up and down while hovering, from 0 to 3. 0 holds it perfectly still." },
+      { name: "entrance", type: "MitoEntrance", def: "none", desc: "How Mito first appears. Replays when the controller is reset." },
+      { name: "entranceDelay", type: "Duration", def: "200 milliseconds", desc: "How long to wait before the entrance starts." },
+      { name: "onEntranceEnd", type: "VoidCallback?", def: "null", desc: "Called once when the entrance is over: after it has risen or arrived." },
+      { name: "onExited", type: "VoidCallback?", def: "null", desc: "Called once when Mito has flown out of the space after the controller's flyOff()." },
+      { name: "wave", type: "bool", def: "true", desc: "Whether Mito waves hello by itself: when its entrance ends and when a pointer arrives after being away. The controller's wave() always works." },
+      { name: "level", type: "double", def: "0.0", desc: "How loud a voice is, from 0 to 1, for a robot used as an assistant. A louder voice makes it bob and open its eyes wider and glow, and the rings burn brighter. 0 does nothing." },
+      { name: "ringGlow", type: "double", def: "1.0", desc: "How bright the rings and the light they throw are, from 0 to 3. 0 hides them." },
+      { name: "ringSpeed", type: "double", def: "1.0", desc: "How fast the rings pulse, from 0 to 4." },
+      { name: "background", type: "Color?", def: "null", desc: "Fill behind Mito. Null means transparent, which is what you want when it sits inside an app." },
+      SPEED,
+      PAUSED,
+      interactive("Whether touch and the pointer affect Mito."),
+      quality("medium", "Level of detail. Lower settings march fewer steps (40, 56 and 80) and probe less for shadow and occlusion, which is faster on weak phones."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() plays the animation from the start, including the entrance. Pass a MitoController to also make Mito blink, shake its head, nod, hop, wave, or fly out of and into the space." },
+      SEMANTIC,
+    ],
+    enums: [
+      {
+        name: "MitoEntrance",
+        desc: "How Mito first appears.",
+        values: [
+          { name: "none", desc: "It is simply there." },
+          { name: "powerUp", desc: "It starts low and dark, the rings light one after another from the smallest, and it rises to its place, then waves." },
+          { name: "flyInFromLeft", desc: "It glides in from past the left edge to its place, then waves. Needs a glideSpeed above 0." },
+          { name: "flyInFromRight", desc: "It glides in from past the right edge to its place, then waves. Needs a glideSpeed above 0." },
+        ],
+      },
+      {
+        name: "MitoSide",
+        desc: "Which side of the space Mito flies in from or out to.",
+        values: [
+          { name: "left", desc: "The left edge." },
+          { name: "right", desc: "The right edge." },
+        ],
+      },
+      MOOD_ENUM,
+      FOLLOW_ENUM,
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "MitoController",
+      desc: "Everything CharacterController does (pause(), resume(), reset(), blink(), shake(), nod() and bounce()), plus waving, and flying out of and back into the space. Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "wave()", desc: "Makes Mito wave hello." },
+        { name: "flyOff(side)", desc: "Makes Mito glide out of the space past the given MitoSide. onExited is called once it has gone. With a glideSpeed of 0 it disappears at once." },
+        { name: "flyIn(side)", desc: "Makes a Mito that has flown off, or never appeared, glide in from past the given edge to its place. With a glideSpeed of 0 it appears at once." },
+        { name: "blink()", desc: "Makes Mito blink once, whatever its own blink setting." },
+        { name: "shake()", desc: "Shakes its head, as for a no. For example, a wrong password." },
+        { name: "nod()", desc: "Nods its head, as for a yes. For example, an accepted code." },
+        { name: "bounce()", desc: "Makes it hop, as for a success." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class Demo extends StatefulWidget {
+  const Demo({super.key});
+
+  @override
+  State<Demo> createState() => _DemoState();
+}
+
+class _DemoState extends State<Demo> {
+  final controller = MitoController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 260,
+          width: double.infinity,
+          child: Mito(
+            controller: controller,
+            entrance: MitoEntrance.powerUp,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(onPressed: controller.nod, child: const Text('Nod')),
+            TextButton(onPressed: controller.shake, child: const Text('Shake')),
+            TextButton(onPressed: controller.wave, child: const Text('Wave')),
+          ],
+        ),
+      ],
+    );
+  }
+}`,
+    notes: [
+      "There is no ground and no background: it draws only the robot, its rings and its shadow, so it sits on whatever is behind it.",
+      "It fills the space its parent gives it, which is also the space it glides in. Give it the full width of the screen if you want it to fly in from past the edges, and a little headroom above for its hops.",
+      "It listens for touches and the mouse anywhere on the screen without taking part in any gesture, so it can sit over other widgets without stealing their taps.",
+      "Mito looks at one thing at a time: lookAtKey wins over lookAt, which wins over the pointer.",
+      "A mouse that stops moving is forgotten after a few seconds. A finger counts only while it is down.",
+      "The three rings flare when it hops or glides, brighten with level, and dim when mood is closed.",
+    ],
+  },
+
+  moonbloom: {
+    summary:
+      "A night scene: a tree in blossom lit from behind, with petals drifting down through the dark. Made to sit behind a sign-up sheet or an onboarding page. On a tall phone screen the tree grows in from one side and runs the full height.",
+    useCases: [
+      "A soft, atmospheric backdrop behind a sign-up or login sheet",
+      "An onboarding or welcome page with a calm, romantic mood",
+      "A seasonal hero for a spring or blossom campaign",
+    ],
+    getCode: `Positioned.fill(
+  child: Moonbloom.backdrop(side: MoonbloomSide.right),
+)`,
+    params: [
+      { name: "blossom", type: "Color", def: "0xFFCFA0FF", desc: "The colour of the blossoms." },
+      { name: "petalColor", type: "Color", def: "0xFFEDE6EA", desc: "The colour of the drifting petals. They lean toward blossom." },
+      { name: "branch", type: "Color", def: "0xFF3E3539", desc: "The colour of the branches." },
+      { name: "background", type: "Color?", def: "null", desc: "What is behind the tree. Null keeps it transparent. A colour also adds a fade to dark below, a soft haze and a vignette." },
+      { name: "side", type: "MoonbloomSide", def: "left", desc: "Which side the tree grows in from." },
+      { name: "blur", type: "double", def: "0.0", desc: "A gentle blur on the tree, from 0 to 100. 0 is sharp. It is built once, so it costs nothing while the scene moves. Petals stay sharp. Try 35 to 60 behind a sheet." },
+      { name: "dim", type: "double", def: "0.0", desc: "Darkens the tree, from 0 to 100, so content on top reads clearly. Petals are not dimmed." },
+      { name: "speed", type: "double", def: "100.0", desc: "How fast everything moves, from 0 to 200. 100 is the original pace and 0 stops it." },
+      { name: "petals", type: "int", def: "140", desc: "How many petals drift down, from 0 to 600. Lower qualities draw fewer." },
+      { name: "wind", type: "double", def: "30.0", desc: "How much the wind sways the sprays and sets the petals wobbling, from 0 to 100." },
+      { name: "glow", type: "double", def: "50.0", desc: "The light round the brightest blossoms, from 0 to 100." },
+      { name: "scale", type: "double", def: "100.0", desc: "Size of the tree, from 20 to 160 percent. Below 100 more of the tree shows." },
+      { name: "reach", type: "double", def: "100.0", desc: "How far the crown reaches across the screen, from 40 to 160 percent." },
+      { name: "density", type: "double", def: "100.0", desc: "How many blossoms, from 10 to 200 percent of the quality's amount." },
+      { name: "seed", type: "int", def: "7", desc: "Changes the shape of the tree and the petals." },
+      { name: "interactive", type: "bool", def: "false", desc: "Whether touch and hover sway the sprays and push the petals. Off by default, because on a sign-up screen the touches belong to the sheet." },
+      PAUSED,
+      quality("medium", "Level of detail. Lower settings bake the tree smaller, with fewer blossoms (3500 on low, 6000 on medium and 9000 on high at the default density) and draw fewer petals."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() restarts the petals." },
+      { name: "semanticLabel", type: "String?", def: "null", desc: "Screen-reader description. Null marks it as decorative, which is right for a background." },
+    ],
+    paramGroups: [
+      {
+        name: "Moonbloom.backdrop",
+        desc: "A soft backdrop for a screen with content on top: the tree is gently blurred and dimmed, and everything moves a little slower (speed 60, 90 petals). It takes only the parameters below.",
+        params: [
+          { name: "side", type: "MoonbloomSide", def: "left", desc: "Which side the tree grows in from." },
+          { name: "blur", type: "double", def: "45.0", desc: "A gentle blur on the tree, from 0 to 100." },
+          { name: "dim", type: "double", def: "25.0", desc: "Darkens the tree, from 0 to 100." },
+          { name: "blossom", type: "Color", def: "0xFFCFA0FF", desc: "The colour of the blossoms." },
+          { name: "background", type: "Color?", def: "null", desc: "What is behind the tree." },
+          { name: "paused", type: "bool", def: "false", desc: "Freezes the animation when true." },
+          { name: "quality", type: "EffectQuality", def: "medium", desc: "Level of detail." },
+          { name: "controller", type: "EffectController?", def: "null", desc: "Optional control." },
+          { name: "semanticLabel", type: "String?", def: "null", desc: "Screen-reader description." },
+        ],
+      },
+    ],
+    enums: [
+      {
+        name: "MoonbloomSide",
+        desc: "Which side of the screen the tree grows in from.",
+        values: [
+          { name: "left", desc: "The tree grows in from the left edge. The open sky is on the right." },
+          { name: "right", desc: "The tree grows in from the right edge. The open sky is on the left." },
+        ],
+      },
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "EffectController",
+      desc: "Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "pause()", desc: "Freezes the animation." },
+        { name: "resume()", desc: "Continues the animation after pause()." },
+        { name: "reset()", desc: "Restarts the petals." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class SignUp extends StatelessWidget {
+  const SignUp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Moonbloom.backdrop(
+              side: MoonbloomSide.right,
+              background: const Color(0xFF0A090D),
+            ),
+          ),
+          const SafeArea(child: Center(child: Text('Create your account'))),
+        ],
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It fills the space it is given. On a tall phone screen the tree fits the width and runs the full height.",
+      "The tree is drawn once into pictures and then only the sprays and petals move, so it is cheap while it runs. Changing the size, colours, seed, blur or quality builds the tree again, which takes a moment.",
+      "Without a background, only the tree, the glow and the petals are drawn, over whatever is behind it.",
+      "Use resizeToAvoidBottomInset: false on the Scaffold, so the keyboard does not resize the scene.",
+      "If the device is set to reduce motion, the scene stays still.",
+    ],
+  },
+
 };
+
+/** Every asset's docs, each carrying the shared install step. Robots read this too. */
+export const DOCS: Record<string, AssetDoc> = Object.fromEntries(
+  Object.entries(RAW_DOCS).map(([slug, doc]) => [slug, { install: INSTALL, ...doc }]),
+);
 
 export function docFor(slug: string): AssetDoc | undefined {
   return DOCS[slug];

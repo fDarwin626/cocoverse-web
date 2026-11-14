@@ -56,22 +56,38 @@ function mirror(ctx: Ctx, draw: () => void) {
 
 /** A classic panda head. Drawn in a 400 by 500 box, with room below for the wordmark. */
 function panda(ctx: Ctx) {
-  // Ears: round black discs behind the head.
+  // Head outline: broad and round, a little fuller at the cheeks.
+  // Reused to keep the ears out of the head, and to fill it.
+  const headPath = () => {
+    ctx.moveTo(200, 66);
+    ctx.bezierCurveTo(284, 66, 354, 118, 354, 202);
+    ctx.bezierCurveTo(354, 282, 290, 336, 200, 336);
+    ctx.bezierCurveTo(110, 336, 46, 282, 46, 202);
+    ctx.bezierCurveTo(46, 118, 116, 66, 200, 66);
+    ctx.closePath();
+  };
+
+  // Ears: round black discs behind the head. Clipped to outside the head,
+  // so they never show through the see-through wash below.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-100, -100, 600, 700);
+  headPath();
+  ctx.clip("evenodd");
   const ear = () => ell(ctx, 86, 88, 52, 50, BLACK);
   ear();
   mirror(ctx, ear);
+  ctx.restore();
 
-  // Head: broad and round, a little fuller at the cheeks.
+  // Head: only a light wash of white, so the face is the rug's own fur
+  // lightened, not a solid white shape sitting on it.
+  ctx.save();
+  ctx.globalAlpha = 0.3;
   ctx.fillStyle = WHITE;
   ctx.beginPath();
-  ctx.moveTo(200, 66);
-  ctx.bezierCurveTo(284, 66, 354, 118, 354, 202);
-  ctx.bezierCurveTo(354, 282, 290, 336, 200, 336);
-  ctx.bezierCurveTo(110, 336, 46, 282, 46, 202);
-  ctx.bezierCurveTo(46, 118, 116, 66, 200, 66);
-  ctx.closePath();
+  headPath();
   ctx.fill();
-
+  ctx.restore();
   // Eye patches: slanted ovals, lower at the outer side.
   const eye = () => {
     ell(ctx, 134, 210, 36, 58, BLACK, 0.55);
