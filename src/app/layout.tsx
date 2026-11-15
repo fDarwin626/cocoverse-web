@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bagel_Fat_One, Fraunces, Syne, Syne_Mono } from "next/font/google";
+import { Bagel_Fat_One, Fraunces, Nunito, Syne, Syne_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "../components/Header";
 import { FloatingDock } from "../components/FloatingDock";
@@ -32,8 +32,16 @@ const syneMono = Syne_Mono({
   display: "swap",
 });
 
+// The rounded, normal-width face for the lock screen clock on the campaign phones.
+const clockFont = Nunito({
+  subsets: ["latin"],
+  weight: ["600"],
+  variable: "--font-clock",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: { default: "CocoVerse UI", template: "%s · CocoVerse UI" },
+title: { default: "CocoVerse UI", template: "%s · CocoVerse UI" },
   description:
     "Animated 3D and particle effects for Flutter. Every effect has a live preview, its parameters and code to copy.",
 };
@@ -50,8 +58,8 @@ return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${bagel.variable} ${fraunces.variable} ${syne.variable} ${syneMono.variable}`}
-    >
+      className={`${bagel.variable} ${fraunces.variable} ${syne.variable} ${syneMono.variable} ${clockFont.variable}`}
+      >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

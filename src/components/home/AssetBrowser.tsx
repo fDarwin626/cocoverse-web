@@ -11,12 +11,28 @@ import { activePhone } from "@/lib/activePhone";
 import { type Asset, type SortKey, SORTS, sortAssets } from "@/lib/assets";
 import { phoneFlight } from "@/lib/flight";
 import { refreshStats, useLiveStats } from "@/lib/liveStats";
+import { layoutPages, PROMOS, type Promo, type PromoRoll, rollPromo } from "@/lib/promo";
+import { PromoBanner } from "../hero/PromoBanner";
+import { PromoPhone } from "../hero/PromoPhone";
+import { Pagination } from "../home/Pagination";
 
 
 gsap.registerPlugin(useGSAP);
 
 const PER_PAGE_DESKTOP = 8;
 const PER_PAGE_MOBILE = 4;
+
+/** What one grid cell holds: an asset phone, a campaign phone or the closing banner. */
+type GridItem =
+  | { kind: "asset"; asset: Asset }
+  | { kind: "promo"; promo: Promo }
+  | { kind: "banner" };
+
+function itemKey(item: GridItem): string {
+  if (item.kind === "asset") return item.asset.slug;
+  if (item.kind === "promo") return `promo-${item.promo.id}`;
+  return "banner";
+}
 
 export function AssetBrowser({ assets }: { assets: Asset[] }) {
   const grid = useRef<HTMLDivElement>(null);
@@ -29,6 +45,7 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
   const [sort, setSort] = useState<SortKey>("recent");
   const [page, setPage] = useState(1);
   const [small, setSmall] = useState(false);
+  const [promo, setPromo] = useState<PromoRoll>({ card: 0, r: 0.5 });
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -45,10 +62,23 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
     [assets, live],
   );
   const sorted = useMemo(() => sortAssets(withLive, sort), [withLive, sort]);
-  const pages = Math.max(1, Math.ceil(sorted.length / perPage));
+    const layout = useMemo(() => layoutPages(sorted.length, perPage), [sorted.length, perPage]);
+  const pages = layout.length;
   const current = Math.min(page, pages);
-  const visible = sorted.slice((current - 1) * perPage, current * perPage);
-  const key = visible.map((a) => a.slug).join("|");
+  const info = layout[current - 1] ?? layout[0];
+  const items: GridItem[] = sorted
+    .slice(info.start, info.start + info.take)
+    .map((asset) => ({ kind: "asset", asset }));
+  // A campaign phone takes one slot, at a random place in the grid.
+  if (info.hasCard) {
+    items.splice(Math.floor(promo.r * (items.length + 1)), 0, {
+      kind: "promo",
+      promo: PROMOS[promo.card % PROMOS.length],
+    });
+  }
+  if (info.hasBanner) items.push({ kind: "banner" });
+  const key = items.map(itemKey).join("|");
+
 
   function choose(next: SortKey) {
     if (next === sort) return;
@@ -60,6 +90,7 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
   function goTo(next: number) {
     activePhone.set(null);
     setPage(next);
+    setPromo(rollPromo());
     grid.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -192,7 +223,23 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
       </div>
 
       <div ref={grid} className="mt-12 grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-4 md:gap-x-10">
-        {visible.map((a) => (
+         {items.map((item) => {
+          if (item.kind === "banner") {
+            return (
+              <div key="banner" data-cell className="col-span-full">
+                <PromoBanner />
+              </div>
+            );
+          }
+          if (item.kind === "promo") {
+            return (
+              <div key={`promo-${item.promo.id}`} data-cell className="mx-auto w-full max-w-[320px]">
+                <PromoPhone promo={item.promo} />
+              </div>
+            );
+          }
+          const a = item.asset;
+          return (
           <div
             key={a.slug}
             data-cell
@@ -209,54 +256,12 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
               onOpen={() => open(a.slug)}
             >
               <FlutterPreview slug={a.slug} />
-            </Phone>
+             </Phone>
           </div>
-        ))}
+          );
+        })}
       </div>
-
-      {pages > 1 ? (
-        <nav aria-label="Pages" className="mt-16 flex items-center justify-center gap-3">
-          <svg width="0" height="0" aria-hidden="true" focusable="false" className="absolute">
-            <filter id="fur-edge" x="-15%" y="-15%" width="130%" height="130%" colorInterpolationFilters="sRGB">
-              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="7" result="noise" />
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-          </svg> 
-        <button
-            type="button"
-            aria-label="Previous page"
-            disabled={current === 1}
-            onClick={() => goTo(current - 1)}
-               className="clay grid size-11 place-items-center rounded-full! text-ink-dim disabled:opacity-40"
-            >
-            <Icon icon="solar:alt-arrow-left-bold" width={18} />
-          </button>
-          {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-current={n === current ? "page" : undefined}
-              onClick={() => goTo(n)}
-              className={
-                n === current
-                  ? "fur fur-gold grid size-12 place-items-center text-xl font-bold"
-                  : "fur grid size-12 place-items-center text-xl font-bold text-ink-dim hover:text-ink"
-              }
-            >
-              {n}
-            </button>
-          ))}
-          <button
-            type="button"
-            aria-label="Next page"
-            disabled={current === pages}
-            onClick={() => goTo(current + 1)}
-            className="clay grid size-11 place-items-center rounded-full! text-ink-dim disabled:opacity-40"
-          >
-            <Icon icon="solar:alt-arrow-right-bold" width={18} />
-          </button>
-        </nav>
-      ) : null}
+      {pages > 1 ? <Pagination pages={pages} current={current} size={small ? 4 : 6} onGo={goTo} /> : null}
     </div>
   );
 }

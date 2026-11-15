@@ -1972,6 +1972,286 @@ class SignUp extends StatelessWidget {
     ],
   },
 
+  gaze: {
+    summary:
+      "A wet, glossy eyeball that turns to look at your finger or cursor, anywhere on the screen. It glances about by itself when nothing is pointing, its pupil snaps small when you press, and your own code can make it stare at a widget. It is drawn by a shader, with veins, fibres in the iris and reflections of a studio.",
+    useCases: [
+      "Eyes inside a headline, such as the two o's of the word look",
+      "A mascot or character that watches the person using your app",
+      "A form or login screen where the eye looks at the field being filled",
+      "A playful hero or onboarding screen that reacts to the pointer",
+    ],
+    getCode: `SizedBox(
+  width: 200,
+  height: 200,
+  child: Gaze(irisColor: Color(0xFF2E9E5B)),
+)`,
+    params: [
+      { name: "irisColor", type: "Color", def: "0xFFFF2400", desc: "The middle tone of the iris. The fibres and the shadows come from it." },
+      { name: "scleraColor", type: "Color", def: "0xFFFFFFFF", desc: "The lit colour of the white of the eye." },
+      { name: "collarColor", type: "Color", def: "0xFF7A4A22", desc: "The ragged ring round the pupil." },
+      { name: "pupilSize", type: "double", def: "0.0", desc: "The resting pupil size, from 0 to 10." },
+      { name: "size", type: "double", def: "8.0", desc: "How much of the box the eye fills, from 0 to 10." },
+      { name: "offsetX", type: "double", def: "0.0", desc: "Moves the eye across the box, as a percentage of the width, from -50 to 50. Positive is right." },
+      { name: "offsetY", type: "double", def: "0.0", desc: "Moves the eye down the box, as a percentage of the height, from -50 to 50. Positive is down." },
+      { name: "follow", type: "GazeFollow", def: "screen", desc: "What the eye follows by itself." },
+      { name: "reach", type: "double", def: "10.0", desc: "How hard it turns toward the pointer, from 0 to 10. 0 stops it following." },
+      { name: "dilate", type: "double", def: "5.2", desc: "How much the pupil reacts, from 0 to 10. It widens as the pointer is near and snaps small on a press." },
+      { name: "wander", type: "double", def: "10.0", desc: "How much it glances about when nothing is pointing, from 0 to 10." },
+      { name: "bob", type: "double", def: "10.0", desc: "How far the whole ball bobs, from 0 to 10." },
+      { name: "restX", type: "double", def: "22.0", desc: "Where it looks at rest, in degrees. Positive is right." },
+      { name: "restY", type: "double", def: "1.0", desc: "Where it looks at rest, in degrees. Positive is up." },
+      { name: "maxTurn", type: "double", def: "42.0", desc: "The most it can turn toward the pointer, in degrees." },
+      { name: "irisAngle", type: "double", def: "29.0", desc: "How wide the iris is, in degrees as seen from the middle of the eye, from 10 to 45." },
+      { name: "bulge", type: "double", def: "12.0", desc: "How far the cornea stands above the ball, as a percentage of its radius, from 0 to 40." },
+      { name: "gloss", type: "double", def: "100.0", desc: "How strong the shiny reflections are. 100 is the original, 0 turns them off." },
+      { name: "redness", type: "double", def: "100.0", desc: "How red the shadow side and the rim are, from 0 to 100." },
+      { name: "veins", type: "double", def: "30.0", desc: "How strong the veins are, from 0 to 100." },
+      { name: "lightAngle", type: "double", def: "0.0", desc: "Turns the studio lights round, in degrees." },
+      { name: "speed", type: "double", def: "100.0", desc: "How fast time runs, as a percentage, from 0 to 300. 100 is normal, 0 freezes it." },
+      PAUSED,
+      quality("medium", "Level of detail. Low drops the finest fibres in the iris and the finest veins."),
+      { name: "controller", type: "GazeController?", def: "null", desc: "Optional control for looking at a point or at a widget, and for startling the eye." },
+      SEMANTIC,
+    ],
+    enums: [
+      {
+        name: "GazeFollow",
+        desc: "What the eye follows by itself.",
+        values: [
+          { name: "screen", desc: "Any finger or cursor, anywhere on the screen." },
+          { name: "off", desc: "Nothing. It only looks where a GazeController tells it to, or rests." },
+        ],
+      },
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "GazeController",
+      desc: "Tells a Gaze where to look, for example at a password field. Create one, pass it as controller, and dispose it when you are done. It also has isLocked (whether it is locked onto a point or a widget) and startleCount (how many times startle was called).",
+      methods: [
+        { name: "lookAt(globalPoint)", desc: "Looks at a point, in screen coordinates." },
+        { name: "lookAtKey(key)", desc: "Looks at the middle of the widget that the GlobalKey belongs to, even as it moves or scrolls." },
+        { name: "release()", desc: "Goes back to following the finger or cursor." },
+        { name: "startle()", desc: "Snaps the pupil small for a moment." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+// The two o's of the word look are eyes.
+class Look extends StatelessWidget {
+  const Look({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(fontSize: 64, fontWeight: FontWeight.w800, height: 1.0);
+    const eye = SizedBox(width: 46, height: 46, child: Gaze());
+    return const Center(
+      child: Text.rich(
+        TextSpan(
+          style: style,
+          children: [
+            TextSpan(text: 'l'),
+            WidgetSpan(alignment: PlaceholderAlignment.middle, child: eye),
+            WidgetSpan(alignment: PlaceholderAlignment.middle, child: eye),
+            TextSpan(text: 'k here.'),
+          ],
+        ),
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It has no background and no text, so it works over anything. It fills the space it is given and draws the eye from the shorter side. Set the size with a SizedBox.",
+      "It follows any finger or cursor anywhere on the screen, without taking part in any gesture, so it can sit over other widgets without stealing their taps.",
+      "The eye is drawn by a fragment shader, gaze.frag, which must be listed under shaders: in the package's pubspec.yaml.",
+      "Use a GazeController with lookAtKey to make it stare at a text field while it is being filled, then release() when the person is done.",
+      "If the device is set to reduce motion, it stops bobbing and glancing about.",
+    ],
+  },
+
+  infiloop: {
+    summary:
+      "A bundle of fine glowing fibres twisting round an infinity loop, with light running along them. It only animates: no touch, no drag. It can also be a loader, where the light fills the loop to a point you choose.",
+    useCases: [
+      "A glowing hero visual for a dark landing page",
+      "A loader or progress indicator with a lot of presence",
+      "A splash screen where the fibres draw themselves on",
+      "A backdrop with a percentage or a logo in the middle, using child",
+    ],
+    getCode: `SizedBox(
+  height: 300,
+  child: Infiloop(
+    lightA: Color(0xFFFFD60A),
+    lightB: Color(0xFFFF3D00),
+  ),
+)`,
+    params: [
+      { name: "baseColor", type: "Color", def: "0xFF632EFF", desc: "The middle colour of the fibres. Their dark and bright tones are made from it." },
+      { name: "lightA", type: "Color", def: "0xFFE070FF", desc: "The main colour of the light running along the fibres and of the outer rim of both loops." },
+      { name: "lightB", type: "Color", def: "0xFF3A6BFF", desc: "The second light colour: a share of the streaks, and the inner rim." },
+      { name: "background", type: "Color?", def: "null", desc: "A colour painted behind it. Null leaves it transparent." },
+      { name: "strands", type: "int", def: "120", desc: "How many fibres, from 1 to 160. Lower qualities draw fewer." },
+      { name: "size", type: "double", def: "5.0", desc: "How much of the box it fills, from 0 to 10." },
+      { name: "thickness", type: "double", def: "5.0", desc: "How thick the bundle is, from 0 to 10." },
+      { name: "twist", type: "int", def: "2", desc: "How many turns the bundle makes round its own axis per loop, from 0 to 8." },
+      { name: "strandWidth", type: "double", def: "6.0", desc: "How wide each fibre is, from 0.5 to 20." },
+      { name: "glow", type: "double", def: "5.0", desc: "The soft bloom round the bundle and the sparkles, from 0 to 10. 0 turns it off." },
+      { name: "brightness", type: "double", def: "5.0", desc: "Overall brightness, from 0 to 10. 5 is normal." },
+      { name: "streaks", type: "int", def: "94", desc: "How many light streaks, from 0 to 120." },
+      { name: "streakLength", type: "double", def: "5.0", desc: "How long the streaks are, from 0 to 10." },
+      { name: "lightBShare", type: "double", def: "2.5", desc: "How much of the light is lightB, from 0 to 10." },
+      { name: "tilt", type: "double", def: "21.0", desc: "The viewing angle from above, in degrees, from 0 to 60." },
+      { name: "angle", type: "double", def: "0.0", desc: "Turns the whole figure, in degrees. 90 stands it upright." },
+      { name: "sway", type: "double", def: "3.0", desc: "How much the fibres drift inside the bundle, from 0 to 10." },
+      { name: "breathe", type: "double", def: "1.0", desc: "How much it breathes and rocks, from 0 to 10." },
+      { name: "offsetX", type: "double", def: "0.0", desc: "Moves it across the box, as a percentage of the width, from -50 to 50." },
+      { name: "offsetY", type: "double", def: "0.0", desc: "Moves it down the box, as a percentage of the height, from -50 to 50." },
+      { name: "speed", type: "double", def: "100.0", desc: "How fast time runs, as a percentage, from 0 to 300. 100 is normal, 0 freezes it." },
+      { name: "reverse", type: "bool", def: "false", desc: "Runs the light the other way round the loop." },
+      { name: "entrance", type: "bool", def: "true", desc: "Whether the fibres draw themselves on when it appears. It takes about two and a half seconds." },
+      { name: "progress", type: "double?", def: "null", desc: "From 0 to 1 turns it into a loader: the light fills the loop to that point. Null is the plain animation." },
+      { name: "seed", type: "int", def: "394", desc: "Changes the fibre and streak layout." },
+      PAUSED,
+      quality("medium", "Level of detail. Lower settings draw fewer fibres (30 percent of strands on low, 55 on medium and 85 on high) and fewer points along each. Low also draws no bloom and no sparkles."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() plays the entrance again." },
+      SEMANTIC,
+      { name: "child", type: "Widget?", def: "null", desc: "A widget in the middle, where the loop crosses, such as a percentage or a logo." },
+    ],
+    enums: [QUALITY_ENUM],
+    controller: {
+      name: "EffectController",
+      desc: "Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "pause()", desc: "Freezes the animation." },
+        { name: "resume()", desc: "Continues the animation after pause()." },
+        { name: "reset()", desc: "Plays the entrance again." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+// A loader: the light fills the loop as progress goes from 0 to 1.
+class Loader extends StatelessWidget {
+  const Loader({super.key, required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Infiloop(
+        progress: progress,
+        lightA: const Color(0xFFFFD60A),
+        lightB: const Color(0xFFFF3D00),
+        child: Text(
+          '0 percent',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It only animates: it ignores touches, so your content on top of it stays tappable.",
+      "The fibres are made of light that adds up, so it looks best over a dark background. Over white it will hardly show.",
+      "It has no background unless you give one. It fills the space it is given, and size sets how much of that space the loop uses.",
+      "If the device is set to reduce motion, it stays still and skips the entrance.",
+    ],
+  },
+
+  crossfold: {
+    summary:
+      "Three bars that fold out of a stack into a cross, hold, and fold back, turning slowly all the while. A loading asset in polished metal or matte plastic, in one colour of your choice.",
+    useCases: [
+      "A loading indicator with real weight and a metallic look",
+      "A progress indicator that unfolds into a full cross as the work finishes",
+      "A logo-like mark for a product page or a splash screen",
+    ],
+    getCode: `SizedBox(
+  height: 160,
+  width: 160,
+  child: Crossfold(color: Color(0xFFD4AF37)),
+)`,
+    params: [
+      { name: "color", type: "Color", def: "0xFFB2B2B2", desc: "The one colour of the bars." },
+      { name: "finish", type: "CrossfoldFinish", def: "metallic", desc: "Metal or matte plastic." },
+      { name: "roughness", type: "double", def: "64.0", desc: "How blurred the reflection is, as a percentage from 0 to 100. On the matte finish it is how dull the plastic is." },
+      { name: "reflect", type: "double", def: "67.0", desc: "How much of the colour the metal gives back, from 0 to 100. The matte finish ignores it." },
+      { name: "size", type: "double", def: "5.0", desc: "How much of the box the figure fills, from 0 to 10." },
+      { name: "spin", type: "double", def: "18.0", desc: "How fast it turns, in degrees a second. 0 stops the turning." },
+      { name: "reverseSpin", type: "bool", def: "false", desc: "Turns it the other way." },
+      { name: "fold", type: "double", def: "90.0", desc: "How far the side bars swing, in degrees, from 0 to 180. 90 is a cross." },
+      { name: "hold", type: "double", def: "30.0", desc: "How long it stays assembled, as a percentage of a cycle, from 0 to 100." },
+      { name: "speed", type: "double", def: "100.0", desc: "How fast time runs, as a percentage, from 0 to 300. 100 is normal. 0 stops the folding and leaves it assembled." },
+      { name: "tilt", type: "double", def: "35.0", desc: "The view from above, in degrees, from -85 to 85." },
+      { name: "sideTilt", type: "double", def: "0.0", desc: "Rolls the view sideways, in degrees." },
+      { name: "offsetX", type: "double", def: "0.0", desc: "Moves it across the box, as a percentage of the width, from -50 to 50." },
+      { name: "offsetY", type: "double", def: "0.0", desc: "Moves it down the box, as a percentage of the height, from -50 to 50." },
+      { name: "progress", type: "double?", def: "null", desc: "From 0 to 1 turns it into a loader: folded up at 0, a full cross at 1, and it eases between values. Null is the endless loop." },
+      BACKGROUND,
+      PAUSED,
+      quality("medium", "Level of detail. High smooths the edges with four rays a pixel. Low and medium use one ray."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() restarts the cycle from the folded stack." },
+      SEMANTIC,
+    ],
+    enums: [
+      {
+        name: "CrossfoldFinish",
+        desc: "How the bars look.",
+        values: [
+          { name: "metallic", desc: "Polished metal, reflecting a studio. The original." },
+          { name: "matte", desc: "Matt plastic: soft light on the colour, with a small glint on the edges." },
+        ],
+      },
+      QUALITY_ENUM,
+    ],
+    controller: {
+      name: "EffectController",
+      desc: "Create one, pass it as controller, and dispose it when you are done.",
+      methods: [
+        { name: "pause()", desc: "Freezes the animation." },
+        { name: "resume()", desc: "Continues the animation after pause()." },
+        { name: "reset()", desc: "Restarts the cycle from the folded stack." },
+      ],
+    },
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class Loading extends StatelessWidget {
+  const Loading({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 160,
+            width: 160,
+            child: Crossfold(color: Color(0xFFD4AF37)),
+          ),
+          Text('Loading...'),
+        ],
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It has no child and no text. Put your own Text next to it wherever you want.",
+      "It fills the space it is given and draws the figure from the shorter side. Set the size with a SizedBox.",
+      "The bars are drawn by a fragment shader, crossfold.frag, which must be listed under shaders: in the package's pubspec.yaml.",
+      "One full cycle is about three and a half seconds at speed 100: rest, unfold, hold, fold.",
+      "If the device is set to reduce motion, it stays assembled and still.",
+    ],
+  },
+
 };
 
 /** Every asset's docs, each carrying the shared install step. Robots read this too. */

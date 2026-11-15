@@ -55,4 +55,7 @@ export const ASSETS: AssetEntry[] = [
   { slug: "meteor", name: "Meteor", addedAt: "2026-11-14" },
   { slug: "mito", name: "Mito", addedAt: "2026-11-14" },
   { slug: "moonbloom", name: "Moonbloom", addedAt: "2026-11-14" },
+  { slug: "gaze", name: "Gaze", addedAt: "2026-11-15" },
+  { slug: "infiloop", name: "Infiloop", addedAt: "2026-11-15" },
+  { slug: "crossfold", name: "Crossfold", addedAt: "2026-11-15" },
 ];

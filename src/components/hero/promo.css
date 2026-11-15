@@ -1,0 +1,505 @@
+/* ---------- The campaign phone: an iPhone 17 Pro showing a lock screen ----------
+   Everything is sized in cqw (1% of the phone's width), like the clay phones. */
+
+.pp {
+  --pp-frame: linear-gradient(145deg, #6a655c 0%, #34302b 40%, #1b1815 65%, #55504a 100%);
+  --pp-btn: linear-gradient(90deg, #4a453f, #1d1a17);
+  --pp-drop: rgba(0, 0, 0, 0.65);
+  container-type: inline-size;
+  display: block;
+  width: 100%;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme="light"] .pp {
+  --pp-frame: linear-gradient(145deg, #f4f1ea 0%, #c6c2b8 40%, #9b968d 65%, #e0dcd2 100%);
+  --pp-btn: linear-gradient(90deg, #e6e2d8, #aaa59b);
+  --pp-drop: rgba(120, 100, 70, 0.35);
+}
+
+/* The same outer size as the clay phones, so the rows line up. */
+.pp-body {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 78 / 158;
+  border-radius: 14cqw;
+  background: var(--pp-frame);
+  box-shadow:
+    1.6cqw 2.4cqw 5cqw var(--pp-drop),
+    inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.5),
+    inset 0.4cqw 0.4cqw 0.8cqw rgba(255, 255, 255, 0.6),
+    inset -0.5cqw -0.5cqw 1cqw rgba(40, 36, 30, 0.45);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .pp:hover .pp-body {
+    transform: translateY(-8px);
+  }
+}
+
+.pp:active .pp-body {
+  transform: scale(0.985);
+}
+
+.pp:focus-visible .pp-body {
+  outline: 0.7cqw solid var(--gold-bright);
+  outline-offset: 1cqw;
+}
+
+/* The black bezel, very thin, and the screen inside it. */
+.pp-bezel {
+  position: absolute;
+  inset: 1.5cqw;
+  border-radius: 12.6cqw;
+  background: #000;
+}
+
+.pp-screen {
+  position: absolute;
+  inset: 1cqw;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 11.6cqw;
+  background: #000;
+}
+
+/* Side buttons: action, volume up and down, power, camera control. */
+.pp-btn {
+  position: absolute;
+  width: 1cqw;
+  border-radius: 0.7cqw;
+  background: var(--pp-btn);
+  box-shadow: inset 0.2cqw 0.2cqw 0.3cqw rgba(255, 255, 255, 0.3);
+}
+
+.pp-b-action {
+  left: -0.7cqw;
+  top: 30cqw;
+  height: 5.5cqw;
+}
+
+.pp-b-up {
+  left: -0.7cqw;
+  top: 40cqw;
+  height: 9cqw;
+}
+
+.pp-b-down {
+  left: -0.7cqw;
+  top: 51cqw;
+  height: 9cqw;
+}
+
+.pp-b-power {
+  right: -0.7cqw;
+  top: 42cqw;
+  height: 14cqw;
+}
+
+.pp-b-cam {
+  right: -0.7cqw;
+  top: 112cqw;
+  height: 10cqw;
+}
+
+/* The wallpaper: your photo, blurred the way a lock screen blurs it. Until the photo
+   file exists the screen is a plain dark charcoal. The layer is larger than the
+   screen, so the blur never shows a soft edge. */
+.pp-photo {
+  position: absolute;
+  inset: -6cqw;
+  z-index: 0;
+  background-color: #1a1714;
+  background-size: cover;
+  background-position: center;
+  filter: blur(3cqw) saturate(1.08);
+}
+
+/* A dark veil over the photo, strongest at the top and the bottom where the words are. */
+.pp-tone {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 5, 4, 0.58) 0%,
+    rgba(6, 5, 4, 0.3) 40%,
+    rgba(6, 5, 4, 0.2) 62%,
+    rgba(6, 5, 4, 0.56) 100%
+  );
+}
+
+/* The Dynamic Island, empty, as it is on a real lock screen. */
+.pp-island {
+  position: absolute;
+  top: 2.6cqw;
+  left: 50%;
+  z-index: 3;
+  width: 25cqw;
+  height: 7cqw;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #000;
+}
+
+/* The date and the time at the top, where a lock screen puts them. */
+.pp-clock {
+  position: absolute;
+  inset: 20cqw 0 auto 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+  text-align: center;
+}
+
+.pp-date {
+  font: 600 4.6cqw/1.2 var(--font-clock), ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 0.3cqw 1.2cqw rgba(0, 0, 0, 0.35);
+}
+
+/* The time is slightly see-through, like the glass clock on an iPhone. */
+.pp-time {
+  font: 600 24cqw/1 var(--font-clock), ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.62);
+  text-shadow: 0 0.5cqw 2.4cqw rgba(0, 0, 0, 0.2);
+}
+
+
+/* The main message sits in the middle, between the clock and the slide control. */
+.pp-head {
+  position: absolute;
+  inset: 54cqw 0 36cqw 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.2cqw;
+  padding: 0 6cqw;
+  text-align: center;
+}
+
+.pp-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.6cqw;
+  font: 700 4cqw/1 var(--font-syne), system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 0.3cqw 1.2cqw rgba(0, 0, 0, 0.5);
+}
+
+.pp-label svg {
+  width: 4.6cqw;
+  height: 4.6cqw;
+}
+
+.pp-title {
+  display: block;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 700;
+  font-size: 8.4cqw;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: #fff;
+  text-shadow: 0 0.4cqw 2cqw rgba(0, 0, 0, 0.55);
+}
+
+.pp-text {
+  display: block;
+  max-width: 82cqw;
+  font: 500 4.2cqw/1.42 var(--font-syne), system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 0.3cqw 1.4cqw rgba(0, 0, 0, 0.55);
+}
+
+/* Slide to reach out: a frosted track with a gold knob that nudges to the right. Tapping
+   anywhere on the phone does the same, because the whole phone is the link. */
+.pp-slide {
+  position: absolute;
+  left: 6cqw;
+  right: 6cqw;
+  bottom: 9.5cqw;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 14.5cqw;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 0 0 0.3cqw rgba(255, 255, 255, 0.24),
+    0 1.2cqw 3cqw rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(3cqw) saturate(140%);
+  backdrop-filter: blur(3cqw) saturate(140%);
+}
+
+.pp-knob {
+  position: absolute;
+  left: 1.5cqw;
+  top: 1.5cqw;
+  display: grid;
+  place-items: center;
+  width: 11.5cqw;
+  height: 11.5cqw;
+  border-radius: 50%;
+  color: #1c1405;
+  background: var(--gold);
+  box-shadow:
+    0 0.6cqw 1.6cqw rgba(0, 0, 0, 0.4),
+    inset 0 0.3cqw 0.4cqw rgba(255, 255, 255, 0.5);
+  animation: pp-nudge 3.2s ease-in-out infinite;
+}
+
+.pp-knob svg {
+  width: 6.2cqw;
+  height: 6.2cqw;
+}
+
+.pp-slide-text {
+  flex: 1;
+  padding-left: 11cqw;
+  text-align: center;
+  font: 700 4.2cqw/1 var(--font-syne), system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* The soft shimmer that runs across "slide to unlock" on an iPhone. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pp-slide-text {
+    background: linear-gradient(
+        100deg,
+        rgba(255, 255, 255, 0.45) 30%,
+        #fff 50%,
+        rgba(255, 255, 255, 0.45) 70%
+      )
+      0 0 / 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: pp-shimmer 3.2s linear infinite;
+  }
+}
+
+@keyframes pp-nudge {
+  0%,
+  60%,
+  100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(3.4cqw);
+  }
+}
+
+@keyframes pp-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+/* The home indicator and a soft glare across the glass. */
+.pp-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 3cqw;
+  z-index: 3;
+  width: 30cqw;
+  height: 1.1cqw;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.pp-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    transparent 26%,
+    transparent 72%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+}
+
+/* ---------- The summary panel on the last page: cut into the stone ----------
+   It has no colour of its own. It takes the page's grain, sits lower than the surface
+   around it, and its words are carved the same way as the rest of the site. */
+
+.pb {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 28px;
+  color: var(--carve-fill, var(--ink));
+  text-decoration: none;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.24);
+  background-image: var(--fluff-grain, none);
+  box-shadow:
+    var(--clay-pressed),
+    0 1px 0 var(--fluff-edge, rgba(255, 235, 190, 0.12));
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme="light"] .pb {
+  background-color: rgba(120, 100, 70, 0.1);
+}
+
+.pb:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+
+.pb-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.75rem 2.5rem;
+  padding: 2.25rem 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .pb-inner {
+    padding: 3rem 3.5rem;
+  }
+}
+
+.pb-copy {
+  display: block;
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.pb-eyebrow {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--carve-gold, var(--gold-text));
+  text-shadow: var(--carve-shadow, none);
+}
+
+.pb-title {
+  display: block;
+  margin-top: 0.7rem;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--carve-fill, var(--ink));
+  text-shadow: var(--carve-shadow, none);
+}
+
+.pb-text {
+  display: block;
+  max-width: 44rem;
+  margin-top: 0.8rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--carve-fill, var(--ink));
+  text-shadow: var(--carve-shadow, none);
+}
+
+.pb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.3rem;
+}
+
+/* Each tag is cut a little deeper into the panel. */
+.pb-chip {
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--carve-fill, var(--ink));
+  text-shadow: var(--carve-shadow, none);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.5),
+    inset -1px -1px 2px rgba(255, 235, 190, 0.07);
+}
+
+[data-theme="light"] .pb-chip {
+  background: rgba(120, 100, 70, 0.06);
+  box-shadow:
+    inset 2px 2px 5px rgba(120, 100, 70, 0.3),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.85);
+}
+
+/* The one loud thing: a flat gold inlay that stands out from the cut. */
+.pb-cta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.4rem;
+  padding: 0 2.1rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1c1405;
+  background: var(--gold);
+  box-shadow:
+    0 3px 0 var(--gold-deep),
+    0 10px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="light"] .pb-cta {
+  box-shadow:
+    0 3px 0 var(--gold-deep),
+    0 10px 20px rgba(120, 100, 70, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+@media (hover: hover) {
+  .pb:hover .pb-cta {
+    transform: translateY(-2px);
+  }
+}
+
+.pb:active .pb-cta {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 var(--gold-deep),
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 767px) {
+  .pb-cta {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-knob,
+  .pp-slide-text {
+    animation: none;
+  }
+}
