@@ -18,7 +18,7 @@ const NAV = [
   { label: "Terms", href: "/terms" },
   { label: "Privacy policy", href: "/privacy" },
 ];
-const SENTENCE = "cocoverse-ui is actively maintained by coconut studios";
+const SENTENCE = "cocoverse-ui is actively mai ntained by coconut studios";
 const SENTENCE_LINES = ["cocoverse-ui is actively", "maintained by coconut studios"];
 
 type Layout = { height: number; px: number; split: boolean };

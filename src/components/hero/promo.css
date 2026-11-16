@@ -258,11 +258,20 @@
     0 0.6cqw 1.6cqw rgba(0, 0, 0, 0.4),
     inset 0 0.3cqw 0.4cqw rgba(255, 255, 255, 0.5);
   animation: pp-nudge 3.2s ease-in-out infinite;
-}
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  }
 
 .pp-knob svg {
   width: 6.2cqw;
   height: 6.2cqw;
+}
+
+/* While a finger or the mouse drags the knob, the hint animation stops. */
+.pp-knob[data-drag="1"] {
+  animation: none;
+  cursor: grabbing;
 }
 
 .pp-slide-text {
@@ -272,6 +281,7 @@
   font: 700 4.2cqw/1 var(--font-syne), system-ui, sans-serif;
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.85);
+  opacity: calc(1 - var(--p, 0));
 }
 
 /* The soft shimmer that runs across "slide to unlock" on an iPhone. */
