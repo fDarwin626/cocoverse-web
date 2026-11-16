@@ -53,6 +53,8 @@ const STRAND_L = 22 // strand length, px: long silky hairs, not grain
 // three equal parts — clump shading, hair streaks and fine fuzz.
 const CRIMP = 0.5 // px a hair waves either side of straight: the swatch's are near straight
 const LETTER_FRAY = 5 // px a letter's dyed hairs run past its edge, either way
+const PHOTO_FRAY = 3 // a dyed picture's hairs run this many times further than a letter's
+const PHOTO_STRENGTH = 0.92 // how fully a dyed picture replaces the fur under it (1 is fully)
 const SWIRL_AMP = 1.6 // rad of lay swing at Swirl 100%
 // The reference's fur is combed round the shape, clockwise (down the right
 // side, leftward along the bottom), not straight out: the rim is a fringe
@@ -199,6 +201,7 @@ export interface MohairCapsuleProps {
     inks?: string[]
     /** A drawing dyed into the fur, placed in CSS px from the centre of the button. */
     art?: Art
+    photo?: string
     /** Scales how long the hairs grow without changing the button's size. */
     hairScale?: number
 
@@ -410,6 +413,10 @@ uniform sampler2D uGridGrad;  // slope of the lattice height, per unit
 uniform sampler2D uBrush;     // how far the fur is laid along a stroke
 uniform sampler2D uNoise;
 uniform sampler2D uLabel;
+uniform sampler2D uPhoto;     // the picture dyed into the fur, premultiplied
+uniform vec4 uPhotoRect;      // its centre and size, in button heights
+uniform float uPhotoOn;       // 0 when there is no picture, otherwise how fully it replaces the fur
+uniform float uPhotoFray;     // how many times further its hairs run than a letter's
 out vec4 outColor;
 
 float sdRR(vec2 p, vec2 b, float r) {
@@ -585,8 +592,23 @@ vec3 inkOf(vec3 t) {
     return s / max(w0 + t.r + t.g + t.b, 1e-4);
 }
 
+// The dye at p: the label's tones, with the picture's own colours laid over them. off is how far
+// this hair carries the dye along itself (the picture's hairs run further than a letter's).
+vec4 dyeAt(vec2 p, vec2 off) {
+    vec4 l = texture(uLabel, (p + off) / (uHalf * 2.0) + 0.5);
+    vec3 c = inkOf(l.rgb);
+    float a = l.a;
+    vec2 pu = (p + off * uPhotoFray - uPhotoRect.xy) / uPhotoRect.zw + 0.5;
+    vec4 ph = texture(uPhoto, clamp(pu, 0.0, 1.0)) * uPhotoOn;
+    ph *= step(0.0, pu.x) * step(pu.x, 1.0) * step(0.0, pu.y) * step(pu.y, 1.0);
+    vec3 pc = pow(ph.rgb / max(ph.a, 0.001), vec3(2.2));
+    c = mix(c, pc, ph.a);
+    a = max(a, ph.a);
+    return vec4(c, a);
+}
+
 vec3 lockAlbedo(Lock k, float ink, vec3 inkCol) {
-    vec3 a = uFur * (0.86 + 0.28 * k.h.x);
+vec3 a = uFur * (0.86 + 0.28 * k.h.x);
     // The odd lighter lock, as in the reference.
     a = mix(a, uTip * 0.75, 0.22 * smoothstep(0.82, 1.0, k.h.y));
     return mix(a, inkCol, ink);
@@ -754,22 +776,22 @@ void main() {
     // Soft and only a little darker than the tufts, as plush is; brighter
     // toward the rim, where the swept tufts part, so no line traces the edge.
     float rimLift = smoothstep(-0.14, 0.0, sd);
-    vec4 lu = uInkOn > 0.5 ? texture(uLabel, (q + F0 * (us - 0.5) * uFray * uUcss) / (uHalf * 2.0) + 0.5) : vec4(0.0);
+    vec4 lu = uInkOn > 0.5 ? dyeAt(q, F0 * (us - 0.5) * uFray * uUcss) : vec4(0.0);
     float inkU = lu.a;
-    vec3 under = mix(uFur * mix(0.55, 0.8, rimLift), inkOf(lu.rgb) * 0.8, inkU) * (0.55 + 0.5 * bodyDiff) * illum * (0.8 + 0.4 * us);
+    vec3 under = mix(uFur * mix(0.55, 0.8, rimLift), lu.rgb * 0.8, inkU) * (0.55 + 0.5 * bodyDiff) * illum * (0.8 + 0.4 * us);
     vec4 acc = vec4(under * body, body);
     // Letters made of the fur: each hair carries the dye a little up or down
     // its own length, so a letter's edge is hairs crossing it both ways.
     if (best2.cov > 0.0) {
-        vec4 l2 = uInkOn > 0.5 ? texture(uLabel, (q - best2.d * (best2.sid - 0.5) * 2.0 * uFray * uUcss) / (uHalf * 2.0) + 0.5) : vec4(0.0);
-        float i2 = l2.a;
-        vec3 c2 = shadeLock(best2, Nb, lockAlbedo(best2, i2, inkOf(l2.rgb)), illum, i2);
+     vec4 l2 = uInkOn > 0.5 ? dyeAt(q, -best2.d * (best2.sid - 0.5) * 2.0 * uFray * uUcss) : vec4(0.0);
+    float i2 = l2.a;
+        vec3 c2 = shadeLock(best2, Nb, lockAlbedo(best2, i2, l2.rgb), illum, i2);
           acc = vec4(c2 * best2.cov, best2.cov) + acc * (1.0 - best2.cov);
     }
     if (best1.cov > 0.0) {
-        vec4 l1 = uInkOn > 0.5 ? texture(uLabel, (q - best1.d * (best1.sid - 0.5) * 2.0 * uFray * uUcss) / (uHalf * 2.0) + 0.5) : vec4(0.0);
-        float i1 = l1.a;
-        vec3 c1 = shadeLock(best1, Nb, lockAlbedo(best1, i1, inkOf(l1.rgb)), illum, i1);
+    vec4 l1 = uInkOn > 0.5 ? dyeAt(q, -best1.d * (best1.sid - 0.5) * 2.0 * uFray * uUcss) : vec4(0.0);
+    float i1 = l1.a;
+        vec3 c1 = shadeLock(best1, Nb, lockAlbedo(best1, i1, l1.rgb), illum, i1);
         acc = vec4(c1 * best1.cov, best1.cov) + acc * (1.0 - best1.cov);
     }
     acc.rgb *= 1.0 - 0.1 * letterShade * (1.0 - ink);
@@ -909,6 +931,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
         inks,
         art,
         hairScale,
+        photo,
         fixed = false,
         decorative = false,
         runs,
@@ -945,7 +968,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
     const cw = bw + 2 * m
     const ch = bh + 2 * m
 
-       const cfg = { bwRef, bhRef, rRef, furColor, furLength, textColor, lines, font, pl, rs, adv, sway, tipColor, inks, art, hairScale, fixed, decorative, runs, bleed }
+       const cfg = { bwRef, bhRef, rRef, furColor, furLength, textColor, lines, font, pl, rs, adv, sway, tipColor, inks, art, photo, hairScale, fixed, decorative, runs, bleed }
     const live = useRef({ cfg, key: "", w: size.w, h: size.h })
     const key = JSON.stringify(cfg)
     live.current.cfg = cfg
@@ -1043,6 +1066,12 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
         let texBrush: WebGLTexture | null = null
         let texNoise: WebGLTexture | null = null
         let texLabel: WebGLTexture | null = null
+        let texPhoto: WebGLTexture | null = null
+        // The picture dyed into the fur (the photo prop): loaded once, then uploaded to its texture.
+        let photoImg: HTMLImageElement | null = null
+        let photoUrl = ""
+        let photoDirty = false
+        let photoReady = false
         let gridDims = ""
         const loc: Record<string, WebGLUniformLocation | null> = {}
         const ucache: Record<string, Float32Array> = {}
@@ -1051,7 +1080,26 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
         let vs: WebGLShader | null = null
         let fs: WebGLShader | null = null
 
-        const labelCanvas = document.createElement("canvas")
+
+      const labelCanvas = document.createElement("canvas")
+
+        const loadPhoto = (url: string) => {
+            if (url === photoUrl) return
+            photoUrl = url
+            photoImg = null
+            photoReady = false
+            photoDirty = false
+            if (!url) return
+            const img = new Image()
+            img.decoding = "async"
+            img.onload = () => {
+                if (photoUrl !== url) return
+                photoImg = img
+                photoDirty = true
+                wake()
+            }
+            img.src = url
+        }
 
         const build = () => {
             const g = gl!
@@ -1088,6 +1136,12 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             texLabel = mk(g.LINEAR_MIPMAP_LINEAR, g.CLAMP_TO_EDGE)
             g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, 1, 1, 0, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4))
             state.labelKey = ""
+            // The picture's texture: empty until the image has loaded.
+            texPhoto = mk(g.LINEAR_MIPMAP_LINEAR, g.CLAMP_TO_EDGE)
+            g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, 1, 1, 0, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4))
+            g.generateMipmap(g.TEXTURE_2D)
+            photoReady = false
+            photoDirty = photoImg !== null
         }
 
         const finishCompile = (): boolean => {
@@ -1107,7 +1161,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             const names = [
                 "uCanvas", "uOrigin", "uUpp", "uUcss", "uHalf", "uRad", "uGrid", "uDeform", "uInflate", "uScale", "uPhase", "uActive",
                 "uFur", "uTip", "uInk", "uInk2", "uInk3", "uInk4", "uInkOn", "uLight", "uLock", "uLook", "uGround", "uFray",
-                "uGridTex", "uBrush", "uNoise", "uLabel", "uGridGrad",
+                "uGridTex", "uBrush", "uNoise", "uLabel", "uGridGrad", "uPhoto", "uPhotoRect", "uPhotoOn", "uPhotoFray",
             ]
             for (const n of names) loc[n] = g.getUniformLocation(prog, n)
             g.uniform1i(loc.uGridTex, 0)
@@ -1115,6 +1169,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             g.uniform1i(loc.uNoise, 2)
             g.uniform1i(loc.uLabel, 3)
             g.uniform1i(loc.uGridGrad, 4)
+            g.uniform1i(loc.uPhoto, 5)
             g.disable(g.BLEND)
             compiled = true
             return true
@@ -1755,8 +1810,21 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
                     state.tip = [(f[0] / mx) * 0.55 + 0.1, (f[1] / mx) * 0.9 + 0.12, (f[2] / mx) * 0.9 + 0.1]
                 }
             }
+         drawLabel(bwPx, bhPx, Math.min(3, scale * 1.25))
 
-            drawLabel(bwPx, bhPx, Math.min(3, scale * 1.25))
+            // The picture dyed into the fur: uploaded once, when it has loaded.
+            loadPhoto(c.photo ?? "")
+            if (photoDirty && photoImg) {
+                g.activeTexture(g.TEXTURE5)
+                g.bindTexture(g.TEXTURE_2D, texPhoto)
+                g.pixelStorei(g.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
+                g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, g.RGBA, g.UNSIGNED_BYTE, photoImg)
+                g.generateMipmap(g.TEXTURE_2D)
+                g.pixelStorei(g.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false)
+                photoDirty = false
+                photoReady = true
+            }
+
 
             // ------------------------------------------------ upload lattice
             // Displacement, its in-plane strain (kept for the swell's crumple
@@ -1823,7 +1891,11 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             g.activeTexture(g.TEXTURE3)
             g.bindTexture(g.TEXTURE_2D, texLabel)
 
+         g.activeTexture(g.TEXTURE5)
+            g.bindTexture(g.TEXTURE_2D, texPhoto)
+
             // ------------------------------------------------ uniforms
+
             const a = c.adv
             const upp = 1 / (bhPx * scale)
             setU("uCanvas", pw, ph)
@@ -1847,7 +1919,12 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
             setU("uInk2", state.inks[0][0], state.inks[0][1], state.inks[0][2])
             setU("uInk3", state.inks[1][0], state.inks[1][1], state.inks[1][2])
             setU("uInk4", state.inks[2][0], state.inks[2][1], state.inks[2][2])
-            setU("uInkOn", c.lines.length || c.runs?.length || c.art ? 1 : 0)
+           setU("uInkOn", c.lines.length || c.runs?.length || c.art ? 1 : 0)
+            const photoArt = photoReady && c.photo ? c.art : undefined
+            setU("uPhotoOn", photoArt ? PHOTO_STRENGTH : 0)
+            setU("uPhotoFray", PHOTO_FRAY)
+            if (photoArt) setU("uPhotoRect", photoArt.x / bhPx, photoArt.y / bhPx, photoArt.w / bhPx, photoArt.h / bhPx)
+            else setU("uPhotoRect", 0, 0, 1, 1)
             // The light stays put in the frame when the button turns.
             const la = ((a.lightAngle - pl0.angle) * Math.PI) / 180
             const le = (clamp(a.lightHeight, 1, 89) * Math.PI) / 180
@@ -1935,6 +2012,7 @@ export default function MohairCapsule(props: MohairCapsuleProps) {
                 g.deleteTexture(texBrush)
                 g.deleteTexture(texNoise)
                 g.deleteTexture(texLabel)
+                g.deleteTexture(texPhoto)
                 g.deleteProgram(prog)
                 g.deleteShader(vs)
                 g.deleteShader(fs)

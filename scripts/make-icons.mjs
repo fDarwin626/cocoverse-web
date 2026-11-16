@@ -16,3 +16,7 @@ await sharp(SRC)
   .png({ compressionLevel: 9 })
   .toFile("src/app/apple-icon.png");
 console.log("wrote src/app/apple-icon.png");
+
+// The hero panda: a small picture that the fur shader dyes into the fur (the original is 2.4 MB).
+await sharp(SRC).resize({ width: 640 }).webp({ quality: 88, alphaQuality: 95 }).toFile("public/logo-hero.webp");
+console.log("wrote public/logo-hero.webp");

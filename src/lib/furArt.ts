@@ -1,6 +1,6 @@
 export interface Art {
   /** "kitten" is kept so existing callers still type-check. */
-  id: "kitten" | "panda";
+id: "kitten" | "panda" | "photo";
   /** Centre of the drawing in CSS px from the centre of the button, and its size. */
   x: number;
   y: number;
@@ -117,7 +117,9 @@ function panda(ctx: Ctx) {
 
 /** Draws the art centred at the origin, fitted into its width and height. */
 export function drawArt(ctx: Ctx, art: Art) {
-  const s = Math.min(art.w / 400, art.h / 500);
+  // A photo is dyed in by the shader from its own picture, not drawn here.
+  if (art.id === "photo") return;
+const s = Math.min(art.w / 400, art.h / 500);
   ctx.save();
   ctx.scale(s, s);
   ctx.translate(-200, -250);

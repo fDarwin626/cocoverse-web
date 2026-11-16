@@ -9,9 +9,13 @@ import { useFurPalette } from "./useFurPalette";
 const HAIR_PX = 45;
 /** Lock length at Fur Length 1, in button heights: the mohair constants 0.06 + 0.032. */
 const LOCK_AT_ONE = 0.092;
-/** TEMPORARY: false hides the hand-drawn panda that is dyed into the fur, so the logo image can be compared. */
-const SHOW_DRAWN_PANDA = false;
-
+/** Which panda is dyed into the fur: the logo picture in its own colours, or the hand-drawn one. */
+const PANDA: "photo" | "drawn" = "photo";
+/** The logo picture (made by scripts/make-icons.mjs) and where it sits in the art slot. */
+const PHOTO = "/logo-hero.webp";
+const PHOTO_ASPECT = 1284 / 1225;
+const PHOTO_W = 0.82; // share of the slot's width
+const PHOTO_TOP = 0.05; // share of the slot's height, from its top
 function useWebGL2(): boolean {
   const [ok, setOk] = useState(true);
   useEffect(() => {
@@ -35,10 +39,18 @@ export function FurBackdrop() {
   const [size, setSize] = useState({ w: 1440, h: 700 });
   const [above, setAbove] = useState(0);
   const [runs, setRuns] = useState<Run[]>([]);
-  const [art, setArt] = useState<Art | undefined>(undefined);
+const [art, setArt] = useState<Art | undefined>(undefined);
+  const [photoOk, setPhotoOk] = useState(PANDA !== "photo");
+const active = hasGL && !!pal;
 
-  const active = hasGL && !!pal;
-
+  // The picture is fetched first, so the panda never pops in after the page shows.
+  useEffect(() => {
+    if (PANDA !== "photo") return;
+    const img = new Image();
+    img.onload = () => setPhotoOk(true);
+    img.onerror = () => setPhotoOk(true);
+    img.src = PHOTO;
+  }, []);
   useEffect(() => {
     const el = areaRef.current;
     if (!el) return;
@@ -82,16 +94,28 @@ export function FurBackdrop() {
 
     const slot = section.querySelector<HTMLElement>("[data-art]");
     const sr = slot?.getBoundingClientRect();
-    const nextArt: Art | undefined =
-      sr && sr.width > 0
-        ? {
-            id: "kitten",
-            x: Math.round(sr.left + sr.width / 2 - cx),
-            y: Math.round(sr.top + sr.height / 2 - cy),
-            w: Math.round(sr.width),
-            h: Math.round(sr.height),
-          }
-        : undefined;
+    let nextArt: Art | undefined;
+    if (sr && sr.width > 0) {
+      if (PANDA === "photo") {
+        const w = sr.width * PHOTO_W;
+        const h = w / PHOTO_ASPECT;
+        nextArt = {
+          id: "photo",
+          x: Math.round(sr.left + sr.width / 2 - cx),
+          y: Math.round(sr.top + sr.height * PHOTO_TOP + h / 2 - cy),
+          w: Math.round(w),
+          h: Math.round(h),
+        };
+      } else {
+        nextArt = {
+          id: "kitten",
+          x: Math.round(sr.left + sr.width / 2 - cx),
+          y: Math.round(sr.top + sr.height / 2 - cy),
+          w: Math.round(sr.width),
+          h: Math.round(sr.height),
+        };
+      }
+    }
     setArt((prev) => (JSON.stringify(prev) === JSON.stringify(nextArt) ? prev : nextArt));
   }, [pal]);
 
@@ -102,7 +126,7 @@ export function FurBackdrop() {
   }, [active, measure, size.w, size.h]);
 
   // The real text turns see-through, and the header's own background steps aside, once the fur is there.
-  const ready = runs.length > 0 || !!art;
+const ready = (runs.length > 0 || !!art) && photoOk;
   useEffect(() => {
     const section = areaRef.current?.closest("section");
     if (!active || !section || !ready) return;
@@ -140,7 +164,8 @@ export function FurBackdrop() {
           background="transparent"
           label=""
           runs={runs}
-          art={SHOW_DRAWN_PANDA ? art : undefined}
+          art={art}
+          photo={PANDA === "photo" ? PHOTO : undefined}
           buttonWidth={size.w + 160}
           buttonHeight={buttonHeight}
           radius={40}
