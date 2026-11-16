@@ -413,3 +413,12 @@
     animation: none;
   }
 }
+
+/* The still picture of an effect: shown while the live view loads, and for good on phones. */
+.cvp-poster-img {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  background-position: center;
+  background-size: cover;
+}

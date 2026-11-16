@@ -38,7 +38,7 @@ export function Phone({ slug, name, views, copies, likes, onOpen, children }: Ph
   function onBodyTap(event: MouseEvent<HTMLDivElement>) {
     if (!touch) return;
     const target = event.target as HTMLElement;
-    if (target.closest(".cvp-screen") || target.closest(".cvp-home")) return;
+    if (target.closest(".cvp-home")) return;
     onOpen?.();
   }
 

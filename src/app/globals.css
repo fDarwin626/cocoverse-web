@@ -768,3 +768,18 @@ html[data-fur-top] header {
     font-variation-settings: normal;
   }
 }
+
+/* Phones and tablets: skip the heavy stone texture and every endless animation. */
+@media (hover: none) and (pointer: coarse) {
+  .pelt {
+    background-image: none;
+  }
+
+  .pelt-layer {
+    display: none;
+  }
+
+  .cvp-dot {
+    animation: none;
+  }
+}

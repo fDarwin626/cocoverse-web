@@ -12,9 +12,13 @@ import "./phone.css";
 /** How long after the last touch an awake phone goes back to sleep. */
 const IDLE_MS = 2500;
 const LEAVE_MS = 1200;
-const TOUCH_AWAKE_MS = 7000;
 
-/** The live effect inside a phone screen: one view of the shared Flutter engine. */
+/**
+ * The live effect inside a phone screen: one view of the shared Flutter engine.
+ *
+ * On a phone or tablet nothing ever plays. The effect loads, shows its first frame and stays
+ * still, and touching the screen does nothing. On desktop a phone wakes when you point at it.
+ */
 export function FlutterPreview({ slug }: { slug: string }) {
   const touch = useTouchOnly();
   const [wrapRef, near] = useInView<HTMLDivElement>("300px 0px");
@@ -24,7 +28,8 @@ export function FlutterPreview({ slug }: { slug: string }) {
   const timer = useRef(0);
   const [viewId, setViewId] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
-  const active = useActivePhone() === slug;
+  const current = useActivePhone();
+  const active = !touch && current === slug;
 
   // Add this phone's view the first time it comes near the screen.
   useEffect(() => {
@@ -69,7 +74,7 @@ export function FlutterPreview({ slug }: { slug: string }) {
     return () => window.removeEventListener("cocoverse-view-ready", onReady);
   }, [viewId]);
 
-  // Wake or sleep the Flutter side.
+  // Wake or sleep the Flutter side. On a phone it is never awake.
   useEffect(() => {
     if (viewId === null) return;
     window.cocoverseSetActive?.(viewId, active);
@@ -78,16 +83,16 @@ export function FlutterPreview({ slug }: { slug: string }) {
   function sleepAfter(ms: number) {
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
-            if (activePhone.get() === slug && !activePhone.isHeld(slug)) activePhone.set(null);
+      if (activePhone.get() === slug && !activePhone.isHeld(slug)) activePhone.set(null);
     }, ms);
   }
 
   // An awake phone goes back to sleep once the user stops interacting.
   useEffect(() => {
-    if (active) sleepAfter(touch ? TOUCH_AWAKE_MS : IDLE_MS);
+    if (active) sleepAfter(IDLE_MS);
     else window.clearTimeout(timer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, touch]);
+  }, [active]);
 
   // ...or when it is scrolled away.
   useEffect(() => {
@@ -110,9 +115,14 @@ export function FlutterPreview({ slug }: { slug: string }) {
         if (active) sleepAfter(LEAVE_MS);
       }}
     >
-      <div ref={hostRef} className="cvp-host" style={{ opacity: ready ? 1 : 0 }} />
+      {/* On a phone the view ignores every touch, so a tap does nothing and the page scrolls freely. */}
+      <div
+        ref={hostRef}
+        className="cvp-host"
+        style={{ opacity: ready ? 1 : 0, pointerEvents: touch ? "none" : undefined }}
+      />
       {!ready ? <PreviewPoster /> : null}
-      {ready && !active ? (
+      {ready && !active && !touch ? (
         <button
           type="button"
           className="cvp-wake"
@@ -120,7 +130,7 @@ export function FlutterPreview({ slug }: { slug: string }) {
           onClick={() => activePhone.set(slug)}
         />
       ) : null}
-      {ready && !active ? (
+      {ready && !active && !touch ? (
         <span className="cvp-play" aria-hidden="true">
           <Icon icon="solar:play-bold" />
         </span>
