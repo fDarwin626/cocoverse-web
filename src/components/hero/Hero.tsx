@@ -4,13 +4,17 @@ import { useGSAP } from "@gsap/react";
 import { Icon } from "@iconify/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Fragment, useRef } from "react";
+import Image from "next/image";
+import { Fragment, type CSSProperties, useRef } from "react";
 import { FurBackdrop } from "../fur/FurBackdrop";
 
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const HEADLINE = ["Effects", "that", "feel", "alive."];
+
+/** TEMPORARY: how the logo image blends into the fur. Try "hard-light", "overlay", "soft-light", "screen", "multiply" or "normal". */
+const LOGO_BLEND: CSSProperties["mixBlendMode"] = "normal";
 
 /** Each word on its own, so phones can dye every word into the fur where it lands. */
 function Words({ text, alt = false }: { text: string; alt?: boolean }) {
@@ -94,8 +98,22 @@ export function Hero() {
           </p>
 
         </div>
-        <div data-stage-wrap className="mx-auto hidden w-full max-w-[420px] md:block">
-          {/* Where the kitten is dyed into the fur. The word under it is dyed in too. */}
+        <div data-stage-wrap className="relative mx-auto hidden w-full max-w-[420px] md:block">
+          {/* TEMPORARY: the logo image instead of the drawn panda, blended into the fur. */}
+        
+          <Image
+            src="/logo.png"
+            alt=""
+            width={1284}
+            height={1225}
+            sizes="420px"
+            loading="eager"
+            fetchPriority="high"
+            className="pointer-events-none absolute inset-x-0 top-[5%] mx-auto h-auto w-[82%]"
+           style={{ mixBlendMode: LOGO_BLEND }}
+          />
+          
+          {/* Where the kitten is dyed into the fur. The word under it is dyed in too. */}  
           <div data-art className="relative aspect-[4/5] w-full" style={{ containerType: "inline-size" }}>
             <span
               aria-hidden="true"

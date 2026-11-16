@@ -141,10 +141,10 @@ export function AssetDocs({ slug }: { slug: string }) {
         <h2 className="carve text-3xl">Example</h2>
         <div className="mt-5">
           <Code>{doc.example}</Code>
-        </div>=-
+        </div>
       </section>
 
-    /  {doc.notes?.length ? (
+      {doc.notes?.length ? (
         <section>
            <h2 className="carve text-3xl">Good to know</h2>
           <ul className="carve-body mt-5 list-disc space-y-2 pl-6">

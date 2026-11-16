@@ -1,9 +1,7 @@
-import { buildLlmsTxt } from "@/lib/llms";
-
-export const dynamic = "force-static";
+import { buildLlmsFullTxt } from "@/lib/llms";
 
 export function GET() {
-  return new Response(buildLlmsTxt(), {
+  return new Response(buildLlmsFullTxt(), {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }

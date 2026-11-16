@@ -10,6 +10,7 @@ import { Phone } from "@/components/phone/Phone";
 import { activePhone } from "@/lib/activePhone";
 import { type Asset, type SortKey, SORTS, sortAssets } from "@/lib/assets";
 import { phoneFlight } from "@/lib/flight";
+import { scrollToElement, startSmooth, stopSmooth } from "@/lib/smoothScroll";
 import { refreshStats, useLiveStats } from "@/lib/liveStats";
 import { layoutPages, PROMOS, type Promo, type PromoRoll, rollPromo } from "@/lib/promo";
 import { PromoBanner } from "../hero/PromoBanner";
@@ -91,7 +92,7 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
     activePhone.set(null);
     setPage(next);
     setPromo(rollPromo());
-    grid.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToElement(grid.current);
   }
 
 
@@ -157,6 +158,7 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
     if (!chosen || !el) return;
     const html = document.documentElement;
     html.style.overflow = "hidden";
+    stopSmooth();
     gsap.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.45, ease: "power2.out" });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") release();
@@ -165,6 +167,7 @@ export function AssetBrowser({ assets }: { assets: Asset[] }) {
     return () => {
       document.removeEventListener("keydown", onKey);
       html.style.overflow = "";
+      startSmooth();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chosen]);

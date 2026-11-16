@@ -9,6 +9,8 @@ import { useFurPalette } from "./useFurPalette";
 const HAIR_PX = 45;
 /** Lock length at Fur Length 1, in button heights: the mohair constants 0.06 + 0.032. */
 const LOCK_AT_ONE = 0.092;
+/** TEMPORARY: false hides the hand-drawn panda that is dyed into the fur, so the logo image can be compared. */
+const SHOW_DRAWN_PANDA = false;
 
 function useWebGL2(): boolean {
   const [ok, setOk] = useState(true);
@@ -138,7 +140,7 @@ export function FurBackdrop() {
           background="transparent"
           label=""
           runs={runs}
-          art={art}
+          art={SHOW_DRAWN_PANDA ? art : undefined}
           buttonWidth={size.w + 160}
           buttonHeight={buttonHeight}
           radius={40}

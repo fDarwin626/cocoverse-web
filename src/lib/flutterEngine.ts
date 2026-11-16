@@ -1,5 +1,7 @@
+import { afterLoader } from "@/lib/whenIdle";
+
 export type FlutterApp = {
-  addView(options: { hostElement: HTMLElement; initialData?: Record<string, unknown> }): number;
+addView(options: { hostElement: HTMLElement; initialData?: Record<string, unknown> }): number;
   removeView(viewId: number): unknown;
 };
 
@@ -38,18 +40,23 @@ export function loadFlutter(): Promise<FlutterApp> {
     );
     // A slow start must never add a second engine. Two engines in one page crash with the Typeface and Picture errors.
     if (state.scriptAdded || document.querySelector("script[data-cocoverse-flutter]")) return;
-    state.scriptAdded = true;
-    const script = document.createElement("script");
-    script.src = "/flutter/flutter_bootstrap.js";
-    script.async = true;
-    script.dataset.cocoverseFlutter = "1";
-    script.onerror = () => {
-      window.clearTimeout(timeout);
-      state.loading = null;
-      state.scriptAdded = false;
-      reject(new Error("Could not load /flutter/flutter_bootstrap.js"));
-    };
-    document.head.appendChild(script);
+        state.scriptAdded = true;
+    // The engine's start-up blocks the page for a moment, so it waits for the loading screen to
+    // go and for the browser to be idle. The page shows and scrolls first.
+    afterLoader(() => {
+      const script = document.createElement("script");
+      script.src = "/flutter/flutter_bootstrap.js";
+      script.async = true;
+      script.dataset.cocoverseFlutter = "1";
+      script.onerror = () => {
+        window.clearTimeout(timeout);
+        state.loading = null;
+        state.scriptAdded = false;
+        reject(new Error("Could not load /flutter/flutter_bootstrap.js"));
+      };
+      document.head.appendChild(script);
+    });
+
   });
   return state.loading;
 }

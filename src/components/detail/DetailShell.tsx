@@ -14,6 +14,8 @@ import { HeartPrompt } from "./HeartPrompt";
 import { HeroPreview } from "./HeroPreview";
 import { SiteFooter } from "../SiteFooter";
 import { hideLiveUntilSettled } from "@/lib/settleLive";
+import { GLIDE } from "@/lib/smoothScroll";
+import Lenis from "lenis";
 
 
 type Props = {
@@ -30,6 +32,7 @@ export function DetailShell({ asset, summary, getCode, modal = false, children }
   const root = useRef<HTMLDivElement>(null);
   const bg = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const docs = useRef<HTMLAreaElement>(null);
   const tl = useRef<gsap.core.Timeline | null>(null);
   const closing = useRef(false);
   const askTimer = useRef(0);
@@ -172,6 +175,24 @@ export function DetailShell({ asset, summary, getCode, modal = false, children }
     );
   }
 
+// Over the grid the page scrolls inside this box, not in the window, so the box gets its own
+  // smooth scroller. (The window's one skips it because of data-cv-modal.)
+  useEffect(() => {
+    const wrapper = root.current;
+    const content = docs.current;
+    if (!modal || !wrapper || !content) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const lenis = new Lenis({ wrapper, content, lerp: GLIDE, smoothWheel: true });
+    let raf = requestAnimationFrame(function loop(time) {
+      lenis.raf(time);
+      raf = requestAnimationFrame(loop);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      lenis.destroy();
+    };
+  }, [modal]);
+
   const closeRef = useRef(close);
   closeRef.current = close;
 
@@ -187,8 +208,12 @@ export function DetailShell({ asset, summary, getCode, modal = false, children }
   }, []);
 
   return (
-        <div ref={root} className={modal ? "fixed inset-0 z-[80] overflow-y-auto overscroll-contain" : "relative isolate"}>
-      <div ref={bg} aria-hidden="true" className="pelt" />
+<div
+      ref={root}
+      data-cv-modal={modal ? "" : undefined}
+      className={modal ? "fixed inset-0 z-[80] overflow-y-auto overscroll-contain" : "relative isolate"}
+    >
+    <div ref={bg} aria-hidden="true" className="pelt" />
       <div className="mx-auto flex max-w-[1400px] items-center px-6 py-6">
         <button
           type="button"
@@ -233,7 +258,7 @@ export function DetailShell({ asset, summary, getCode, modal = false, children }
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1100px] px-6 pb-32">{children}</section>
+      <section ref={docs} className="mx-auto max-w-[1100px] px-6 pb-32">{children}</section>
        {modal ? <SiteFooter /> : null}
       <HeartPrompt open={asking} name={asset.name} onLater={later} onHeart={heart} />
     </div>

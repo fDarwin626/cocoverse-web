@@ -2252,10 +2252,77 @@ class Loading extends StatelessWidget {
     ],
   },
 
+  "particle-cube": {
+    summary:
+      "A cube made of glowing dots whose layers turn like a Rubik's cube. Dots fade and shrink with distance, and the colours run from the first colour far away to the last colour close. Touch or hover and the dots near your finger grow and glow, and drag to spin the whole cube.",
+    useCases: [
+      "A hero visual for a tech, product or game page",
+      "A loading or splash screen that keeps moving",
+      "A tactile showpiece that reacts to the mouse or finger",
+    ],
+    getCode: `ParticleCube(
+  colors: [
+    Color(0xFF1B1F3B),
+    Color(0xFF4C6EF5),
+    Color(0xFFFFD43B),
+  ],
+)`,
+    params: [
+      { name: "colors", type: "List<Color>?", def: "app theme", desc: "Colours from far to near: the first colour is the dots at the back, the last is the dots at the front. Null takes them from the app's theme." },
+      BACKGROUND,
+      { name: "grid", type: "int", def: "4", desc: "Cells along each edge, from 2 to 8. This is also the number of layers that can turn." },
+      { name: "dotsPerCell", type: "int", def: "3", desc: "Dots along each cell edge, from 1 to 8. More dots look denser and cost more." },
+      { name: "dotSize", type: "double", def: "2.5", desc: "The base dot radius, in logical pixels." },
+      { name: "size", type: "double", def: "1.0", desc: "Size of the cube, from 0.2 to 2.0. 2.0 is twice as big." },
+      { name: "turnDuration", type: "Duration", def: "750 milliseconds", desc: "How long one layer takes to turn." },
+      { name: "hoverBoost", type: "double", def: "1.0", desc: "How much the dots grow and glow near a finger or mouse, from 0 to 2. 0 turns it off." },
+      SPEED,
+      { name: "spin", type: "double", def: "1.0", desc: "How fast the whole cube turns on its own. 0 stops the turning." },
+      PAUSED,
+      interactive("Whether touch, hover and drag affect the cube."),
+      DRAG,
+      quality("high", "Level of detail. Lower settings use fewer dots per cell."),
+      { name: "controller", type: "EffectController?", def: "null", desc: "Optional control. reset() cancels the layer that is turning right now. The layers already turned stay where they are." },
+      SEMANTIC,
+    ],
+    enums: [QUALITY_ENUM],
+    controller: EFFECT_CONTROLLER,
+    example: `import 'package:flutter/material.dart';
+import 'package:cocoverse_ui/cocoverse_ui.dart';
+
+class Demo extends StatelessWidget {
+  const Demo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 320,
+        height: 320,
+        child: ParticleCube(
+          grid: 5,
+          dotsPerCell: 3,
+          turnDuration: Duration(milliseconds: 900),
+        ),
+      ),
+    );
+  }
+}`,
+    notes: [
+      "It fills the space its parent gives it. Set the size with a SizedBox and the position with padding or Align. The parent must give bounded constraints.",
+      "Every turn picks a random layer on a random axis and turns it a quarter, and it never undoes the turn before. Dots always land on exact positions, so nothing drifts.",
+      "With the defaults (grid 4, dotsPerCell 3) the cube has 488 dots. Raising grid or dotsPerCell adds many more, so on weaker phones keep them low or leave quality on medium or low.",
+      "The dots add their light together, so it looks best over a dark background.",
+      "Drag to spin the whole cube. It also turns slowly on its own.",
+    ],
+  },
+
 };
 
 /** Every asset's docs, each carrying the shared install step. Robots read this too. */
-export const DOCS: Record<string, AssetDoc> = Object.fromEntries(
+
+
+  export const DOCS: Record<string, AssetDoc> = Object.fromEntries(
   Object.entries(RAW_DOCS).map(([slug, doc]) => [slug, { install: INSTALL, ...doc }]),
 );
 

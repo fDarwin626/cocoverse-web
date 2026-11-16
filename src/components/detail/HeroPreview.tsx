@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from "react";
 import { enqueueView, loadFlutter } from "@/lib/flutterEngine";
 import { phoneFlight } from "@/lib/flight";
 import { useTouchOnly } from "@/lib/useTouchOnly";
+import { whenIdle } from "@/lib/whenIdle";
 
 /** How long the phone takes to fly in from the grid, in milliseconds. The effect starts after it. */
 const FLIGHT_MS = 1100;
@@ -39,17 +40,21 @@ export function HeroPreview({ slug }: { slug: string }) {
 
     // Opened from the grid: let the phone land first. Opened directly: start at once.
     const delay = phoneFlight.get(slug) ? FLIGHT_MS : 0;
+    // The engine's start-up blocks the page for a moment, so it waits until the browser is idle.
+    let cancelIdle: () => void = () => {};
     const wait = window.setTimeout(() => {
-      enqueueView(async () => {
-        const app = await loadFlutter();
-        if (cancelled) return;
-        ownId = app.addView({ hostElement: mine, initialData: { slug, low: touch } });
-      }).catch((error) => console.error("[cocoverse] could not start", slug, error));
+      cancelIdle = whenIdle(() => {
+        enqueueView(async () => {
+          const app = await loadFlutter();
+          if (cancelled) return;
+          ownId = app.addView({ hostElement: mine, initialData: { slug, low: touch } });
+        }).catch((error) => console.error("[cocoverse] could not start", slug, error));
+      });
     }, delay);
-
     return () => {
       cancelled = true;
       window.clearTimeout(wait);
+      cancelIdle();
       window.removeEventListener("cocoverse-view-ready", onReady);
       if (ownId !== null) window.__cocoverseFlutter?.removeView(ownId);
       mine.remove();

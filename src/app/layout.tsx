@@ -4,6 +4,8 @@ import "./globals.css";
 import { Header } from "../components/Header";
 import { FloatingDock } from "../components/FloatingDock";
 import { SiteFooter } from "../components/SiteFooter";
+import { SiteLoader } from "../components/SiteLoader";
+import { SmoothScroll } from "../components/SmoothScroll";
 
 const bagel = Bagel_Fat_One({
   weight: "400",
@@ -64,6 +66,8 @@ return (
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <SiteLoader/>
+        <SmoothScroll />
       <Header />
         <FloatingDock />
         {children}
