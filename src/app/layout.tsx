@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     url: "/",
   },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
-  verification: { google: "PASTE-THE-CODE-HERE" },
+  verification: { google: "sw3c8Xczu_-vpadTko43KEoHy-NVo9Y9VXS7jqxJe2A" },
 };
 
 
