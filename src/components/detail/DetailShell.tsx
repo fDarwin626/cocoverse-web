@@ -14,7 +14,7 @@ import { HeartPrompt } from "./HeartPrompt";
 import { HeroPreview } from "./HeroPreview";
 import { SiteFooter } from "../SiteFooter";
 import { hideLiveUntilSettled } from "@/lib/settleLive";
-import { GLIDE } from "@/lib/smoothScroll";
+import { GLIDE, trackSmooth } from "@/lib/smoothScroll";
 import Lenis from "lenis";
 
 
@@ -183,12 +183,14 @@ export function DetailShell({ asset, summary, getCode, modal = false, children }
     if (!modal || !wrapper || !content) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const lenis = new Lenis({ wrapper, content, lerp: GLIDE, smoothWheel: true });
+    const untrack = trackSmooth(lenis);
     let raf = requestAnimationFrame(function loop(time) {
       lenis.raf(time);
       raf = requestAnimationFrame(loop);
     });
     return () => {
       cancelAnimationFrame(raf);
+      untrack();
       lenis.destroy();
     };
   }, [modal]);

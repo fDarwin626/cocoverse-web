@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { enqueueView, loadFlutter } from "@/lib/flutterEngine";
+import { enqueueView, loadFlutter, viewReady } from "@/lib/flutterEngine";
 import { phoneFlight } from "@/lib/flight";
 import { useTouchOnly } from "@/lib/useTouchOnly";
 import { whenIdle } from "@/lib/whenIdle";
@@ -48,6 +48,7 @@ export function HeroPreview({ slug }: { slug: string }) {
           const app = await loadFlutter();
           if (cancelled) return;
           ownId = app.addView({ hostElement: mine, initialData: { slug, low: touch } });
+          await viewReady(ownId);
         }).catch((error) => console.error("[cocoverse] could not start", slug, error));
       });
     }, delay);

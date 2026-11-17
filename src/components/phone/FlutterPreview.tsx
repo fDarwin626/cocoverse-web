@@ -3,7 +3,7 @@
 import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 import { activePhone, useActivePhone } from "@/lib/activePhone";
-import { enqueueView, loadFlutter } from "@/lib/flutterEngine";
+import { enqueueView, loadFlutter, viewReady } from "@/lib/flutterEngine";
 import { useInView } from "@/lib/useInView";
 import { useTouchOnly } from "@/lib/useTouchOnly";
 import { PreviewPoster } from "./PreviewPoster";
@@ -45,6 +45,8 @@ export function FlutterPreview({ slug }: { slug: string }) {
       const id = app.addView({ hostElement: host, initialData: { slug, low: touch } });
       idRef.current = id;
       setViewId(id);
+      // Hold this place in the queue until the phone has warmed up, so only a few draw at once.
+      await viewReady(id);
     }).catch((error) => {
       started.current = false;
       console.error("[cocoverse] could not start", slug, error);

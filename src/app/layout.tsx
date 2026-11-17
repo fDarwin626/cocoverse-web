@@ -6,6 +6,7 @@ import { FloatingDock } from "../components/FloatingDock";
 import { SiteFooter } from "../components/SiteFooter";
 import { SiteLoader } from "../components/SiteLoader";
 import { SmoothScroll } from "../components/SmoothScroll";
+import { SITE_URL } from "@/lib/site";
 
 const bagel = Bagel_Fat_One({
   weight: "400",
@@ -42,11 +43,27 @@ const clockFont = Nunito({
   display: "swap",
 });
 
+const TITLE = "CocoVerse UI: animated 3D and particle effects for Flutter";
+const DESCRIPTION =
+  "A free Flutter package of animated 3D and particle effects, characters and loaders. Every effect has a live preview, every parameter explained and code to copy.";
+
 export const metadata: Metadata = {
-title: { default: "CocoVerse UI", template: "%s · CocoVerse UI" },
-  description:
-    "Animated 3D and particle effects for Flutter. Every effect has a live preview, its parameters and code to copy.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: TITLE, template: "%s · CocoVerse UI" },
+  description: DESCRIPTION,
+  applicationName: "CocoVerse UI",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "CocoVerse UI",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
+  verification: { google: "PASTE-THE-CODE-HERE" },
 };
+
 
 // Sets the theme before the page paints, so there is no flash of the wrong one.
 const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.dataset.theme=t;}catch(e){}document.documentElement.classList.add('js');})();`;
