@@ -102,7 +102,7 @@ export function FloatingDock() {
       const buttonBox = headers[1]?.getBoundingClientRect();
 
       gsap.set(dock, { x: 0, y: 0, scaleX: 1, scaleY: 1 });
-      const t = gsap.timeline({ paused: true, onReverseComplete: handBack });
+      const t = gsap.timeline({ paused: true, defaults: { force3D: true }, onReverseComplete: handBack });
 
       if (!logoBox || !buttonBox) {
         // No header to fly from: the button just fades in as the home button.
@@ -160,7 +160,7 @@ export function FloatingDock() {
     };
 
     const goHome = () => {
-      setTray(false, true);
+      if (openRef.current) setTray(false, true);
       if (tl && tl.isActive() && !tl.reversed()) {
         tl.reverse();
         return;
@@ -190,10 +190,21 @@ export function FloatingDock() {
       tl.progress(1);
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // The scroll position is read once a frame at most, not on every scroll event.
+    let frame = 0;
+    const onScrollFrame = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        onScroll();
+      });
+    };
+    window.addEventListener("scroll", onScrollFrame, { passive: true });
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      tl?.kill();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScrollFrame);
+    tl?.kill();
       html.removeAttribute("data-docked");
       gsap.set([logo, dock, main, themeIcon, homeIcon], { clearProps: "all" });
     };
@@ -230,7 +241,7 @@ export function FloatingDock() {
   return (
     <div ref={root}>
       {/* A copy of the header logo, the one that gets pulled in. Decorative. */}
-      <div aria-hidden="true" data-dock-logo className="pointer-events-none invisible fixed left-0 top-0 z-[60]">
+      <div aria-hidden="true" data-dock-logo className="pointer-events-none invisible fixed left-0 top-0 z-[60] will-change-transform">
         <span className="inline-flex items-center gap-2 font-logo text-3xl leading-none">
           <span className="text-ink">CocoVerse</span>
           <span className="rounded-full bg-gradient-to-br from-gold-bright via-gold to-gold-deep px-3 py-1 text-[0.55em] text-[#1c1405] shadow-[var(--clay-raised)]">
@@ -241,8 +252,8 @@ export function FloatingDock() {
 
       <div
         data-dock
-        className="invisible fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 z-[60] flex items-center"
-      >
+        className="invisible fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 z-[60] flex items-center will-change-transform"
+        >
         <span
           aria-hidden="true"
           data-dock-pill
@@ -267,8 +278,8 @@ export function FloatingDock() {
           onClick={onMain}
           aria-expanded={open}
           aria-label={open ? "Go home" : "Open menu"}
-          className="clay relative grid size-12 place-items-center rounded-full! text-gold"
-        >
+          className="clay relative grid size-12 place-items-center rounded-full! text-gold will-change-transform"
+          >
           <span data-dock-theme-icon className="absolute inset-0 grid place-items-center">
             <Icon icon={themeIconName} width={22} />
           </span>

@@ -21,6 +21,7 @@ const globalState = globalThis as unknown as {
   __cocoverseLoader?: LoaderState;
   __cocoverseScrollAt?: number;
   __cocoverseScrollWatch?: boolean;
+  __cocoverseScrollHeld?: boolean;
 };
 const state: LoaderState = (globalState.__cocoverseLoader ??= { loading: null, scriptAdded: false });
 
@@ -81,12 +82,12 @@ export function loadFlutter(): Promise<FlutterApp> {
 
 
 /** How many views may warm up at once. Each warm-up draws frames, so more means a busier page. */
-const MAX_WARM = 2;
+const MAX_WARM = 1;
 /** A pause between one view finishing and the next one starting, in ms. */
 const GAP_MS = 350;
 /** How long the page must have been still before a new view is added, and the longest we wait for that, in ms. */
-const QUIET_MS = 400;
-const MAX_WAIT_MS = 5000;
+const QUIET_MS = 900;
+const MAX_WAIT_MS = 3000;
 
 let warming = 0;
 const waiting: Array<() => void> = [];
@@ -118,6 +119,32 @@ if (typeof window !== "undefined" && !globalState.__cocoverseScrollWatch) {
   for (const type of ["scroll", "wheel", "touchmove"]) {
     window.addEventListener(type, mark, { passive: true, capture: true });
   }
+  // The scroll keys, and a press on the page's scrollbar, are handled by the page's own thread,
+  // so they freeze while a view starts. They count as scrolling for as long as they last.
+  const SCROLL_KEYS = ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "];
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (SCROLL_KEYS.includes(event.key)) mark();
+    },
+    { passive: true, capture: true },
+  );
+  window.addEventListener(
+    "mousedown",
+    (event) => {
+      // A press to the right of the page's content is a press on its scrollbar.
+      if (event.clientX >= document.documentElement.clientWidth) globalState.__cocoverseScrollHeld = true;
+    },
+    { passive: true, capture: true },
+  );
+  window.addEventListener(
+    "mouseup",
+    () => {
+      globalState.__cocoverseScrollHeld = false;
+    },
+    { passive: true, capture: true },
+  );
+
 }
 
 /** Resolves once the page has been still for QUIET_MS, or after MAX_WAIT_MS at the latest. */
@@ -127,8 +154,11 @@ function scrollQuiet(): Promise<void> {
     const check = () => {
       const now = performance.now();
       const since = now - (globalState.__cocoverseScrollAt ?? 0);
-      if (since >= QUIET_MS || now - started >= MAX_WAIT_MS) resolve();
-      else window.setTimeout(check, QUIET_MS - since + 20);
+      // A held scrollbar counts as scrolling, even while the thumb sits still.
+      const held = globalState.__cocoverseScrollHeld === true && since < 3000;
+      if ((since >= QUIET_MS && !held) || now - started >= MAX_WAIT_MS) resolve();
+      else window.setTimeout(check, Math.max(QUIET_MS - since, 100));
+
     };
     check();
   });
